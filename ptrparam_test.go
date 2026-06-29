@@ -3,10 +3,11 @@ package ptrparam_test
 import (
 	"testing"
 
-	ptrparam "github.com/gomatic/yze-go-ptrparam"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/tools/go/analysis/analysistest"
+
+	ptrparam "github.com/gomatic/yze-ptrparam"
 )
 
 func TestDisallowedPointerParametersAreReported(t *testing.T) {
@@ -15,7 +16,7 @@ func TestDisallowedPointerParametersAreReported(t *testing.T) {
 
 func TestRegistrationIsWellFormed(t *testing.T) {
 	assert.NoError(t, ptrparam.Registration.Validate())
-	assert.Equal(t, "yze/go/ptrparam", ptrparam.Registration.RuleID())
+	assert.Equal(t, "yze/ptrparam", ptrparam.Registration.RuleID())
 	assert.Same(t, ptrparam.Analyzer, ptrparam.Registration.Analyzer)
 }
 

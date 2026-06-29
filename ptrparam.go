@@ -57,7 +57,6 @@ func newAnalyzer() *analysis.Analyzer {
 // Registration declares this analyzer to the yze framework.
 var Registration = goyze.Registration{
 	Name:       "ptrparam",
-	Group:      "go",
 	Categories: []goyze.Category{"immutability"},
 	URL:        "https://docs.gomatic.dev/yze/go/ptrparam",
 	Analyzer:   Analyzer,

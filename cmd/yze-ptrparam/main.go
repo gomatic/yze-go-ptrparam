@@ -3,8 +3,9 @@
 package main
 
 import (
-	ptrparam "github.com/gomatic/yze-go-ptrparam"
 	"golang.org/x/tools/go/analysis/singlechecker"
+
+	ptrparam "github.com/gomatic/yze-ptrparam"
 )
 
 // run is the analysis entry point, indirected so the binary's wiring is testable
