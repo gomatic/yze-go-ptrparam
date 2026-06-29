@@ -45,12 +45,18 @@ var Analyzer = newAnalyzer()
 
 func newAnalyzer() *analysis.Analyzer {
 	a := &analysis.Analyzer{
-		Name:     "ptrparam",
-		Doc:      "reports pointer parameters unless the pointed-to type is a standard-library type where a pointer is idiomatic",
+		Name: "ptrparam",
+		Doc: "reports pointer parameters unless the pointed-to type is a " +
+			"standard-library type where a pointer is idiomatic",
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
 		Run:      run,
 	}
-	a.Flags.StringVar(&allowExtra, "allow", "", "comma-separated extra fully-qualified pointer-parameter types (pkgpath.Name)")
+	a.Flags.StringVar(
+		&allowExtra,
+		"allow",
+		"",
+		"comma-separated extra fully-qualified pointer-parameter types (pkgpath.Name)",
+	)
 	return a
 }
 
@@ -95,17 +101,30 @@ func splitNonEmpty(value string) []string {
 
 // check reports a parameter whose type is a non-idiomatic pointer.
 func check(pass *analysis.Pass, allow map[string]bool, field *ast.Field) {
-	star, ok := field.Type.(*ast.StarExpr)
+	star, ok := paramType(field).(*ast.StarExpr)
 	if !ok || allowedPointer(allow, pass, star.X) {
 		return
 	}
-	pass.Reportf(star.Pos(), "pointer parameter; pass by value unless it is a standard-library type where a pointer is idiomatic")
+	pass.Reportf(
+		star.Pos(),
+		"pointer parameter; pass by value unless it is a standard-library type where a pointer is idiomatic",
+	)
+}
+
+// paramType returns the type expression to inspect for a parameter field,
+// unwrapping a variadic parameter's ellipsis to its element type so that
+// `...*T` is treated as a pointer parameter.
+func paramType(field *ast.Field) ast.Expr {
+	if ellipsis, ok := field.Type.(*ast.Ellipsis); ok {
+		return ellipsis.Elt
+	}
+	return field.Type
 }
 
 // allowedPointer reports whether the pointed-to type expression names an
 // allow-listed type.
 func allowedPointer(allow map[string]bool, pass *analysis.Pass, x ast.Expr) bool {
-	named, ok := pass.TypesInfo.TypeOf(x).(*types.Named)
+	named, ok := types.Unalias(pass.TypesInfo.TypeOf(x)).(*types.Named)
 	if !ok || named.Obj().Pkg() == nil {
 		return false
 	}

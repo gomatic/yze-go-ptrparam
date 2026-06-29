@@ -1,8 +1,14 @@
 package a
 
-import "log/slog"
+import (
+	"bytes"
+	"log/slog"
+)
 
 type Plain struct{ x int }
+
+// BufAlias is an alias of an allow-listed standard-library type.
+type BufAlias = bytes.Buffer
 
 // takesLocal is flagged: pointer to a local type.
 func takesLocal(p *Plain) { _ = p } // want `pointer parameter`
@@ -18,3 +24,9 @@ func takesLogger(l *slog.Logger) { _ = l }
 
 // takesValue is fine: a value parameter.
 func takesValue(p Plain) { _ = p }
+
+// aliasOK is allowed: a pointer to an alias of an allow-listed stdlib type.
+func aliasOK(b *BufAlias) { _ = b }
+
+// variadicPtr is flagged: a variadic pointer parameter.
+func variadicPtr(xs ...*int) { _ = xs } // want `pointer parameter`
