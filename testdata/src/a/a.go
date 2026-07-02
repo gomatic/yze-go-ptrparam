@@ -76,3 +76,31 @@ type guarded struct {
 }
 
 func takesGuarded(g *guarded) { _ = g }
+
+// unexportedMix skips unexported methods: its exported methods are all
+// pointer-receiver, so it is pointer-only and allowed.
+type unexportedMix struct{ n int }
+
+func (u *unexportedMix) Bump() { u.n++ }
+
+func (u unexportedMix) peek() int { return u.n }
+
+func takesUnexportedMix(u *unexportedMix) { _ = u }
+
+// twice holds two fields of one lock-free type, exercising the copy-walk's
+// seen-set; still copyable and methodless, so flagged.
+type point struct{ x, y int }
+
+type twice struct{ a, b point }
+
+func takesTwice(tw *twice) { _ = tw } // want `pointer parameter`
+
+// arrayGuard holds locks inside an array element: uncopyable, allowed.
+type arrayGuard struct{ cells [2]guarded }
+
+func takesArrayGuard(a *arrayGuard) { _ = a }
+
+// ptrField holds a lock behind a pointer, which copies safely: flagged.
+type ptrField struct{ mu *sync.Mutex }
+
+func takesPtrField(p *ptrField) { _ = p } // want `pointer parameter`
