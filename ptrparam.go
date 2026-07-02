@@ -1,10 +1,12 @@
 // Package ptrparam provides a go/analysis analyzer enforcing the gomatic Go
 // immutability standard: function parameters are passed by value, never by
 // pointer, unless a pointer is the pointed-to type's idiomatic calling
-// convention — a standard-library type conventionally passed by pointer, the
-// sanctioned CLI framework's *cli.Command (urfave/cli/v3 imposes it in every
-// Action/Before/After signature), or a type parameter (a generic seam whose
-// instantiations the analyzer cannot judge).
+// convention — a standard-library type conventionally passed by pointer (the
+// generated allowlist_std.go, discovered from the toolchain by discover.go:
+// uncopyable types, pointer-only method sets, and types the stdlib's own API
+// passes as *T), the sanctioned CLI framework's *cli.Command (urfave/cli/v3
+// imposes it in every Action/Before/After signature), or a type parameter (a
+// generic seam whose instantiations the analyzer cannot judge).
 package ptrparam
 
 import (
@@ -18,30 +20,12 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// allowedPointerParams are the types conventionally passed by pointer: the
-// standard-library types where a pointer is the idiomatic calling convention,
-// plus the sanctioned CLI framework's command type, whose pointer-taking
-// callback signatures (Action/Before/After/ExitErrHandler) urfave/cli/v3
-// itself imposes on every conforming CLI.
+// allowedPointerParams are the non-standard-library types conventionally
+// passed by pointer: the sanctioned CLI framework's command type, whose
+// pointer-taking callback signatures (Action/Before/After/ExitErrHandler)
+// urfave/cli/v3 itself imposes on every conforming CLI. Standard-library
+// types come from the generated stdPointerParams (allowlist_std.go).
 var allowedPointerParams = map[string]bool{
-	"log/slog.Logger":                  true,
-	"testing.T":                        true,
-	"testing.B":                        true,
-	"testing.F":                        true,
-	"testing.M":                        true,
-	"sync.WaitGroup":                   true,
-	"os.File":                          true,
-	"os.Root":                          true,
-	"net/http.Request":                 true,
-	"net/http.Response":                true,
-	"bytes.Buffer":                     true,
-	"strings.Builder":                  true,
-	"text/template.Template":           true,
-	"html/template.Template":           true,
-	"crypto/tls.Config":                true,
-	"database/sql.DB":                  true,
-	"database/sql.Tx":                  true,
-	"database/sql.Stmt":                true,
 	"github.com/urfave/cli/v3.Command": true,
 }
 
@@ -89,9 +73,13 @@ func run(pass *analysis.Pass) (any, error) {
 	return nil, nil
 }
 
-// buildAllow merges the baked-in idiomatic pointer types with the configured extras.
+// buildAllow merges the generated standard-library allowlist and the baked-in
+// framework types with the configured extras.
 func buildAllow(extra string) map[string]bool {
-	allow := make(map[string]bool, len(allowedPointerParams))
+	allow := make(map[string]bool, len(stdPointerParams)+len(allowedPointerParams))
+	for name := range stdPointerParams {
+		allow[name] = true
+	}
 	for name := range allowedPointerParams {
 		allow[name] = true
 	}
