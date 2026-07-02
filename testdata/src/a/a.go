@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"strings"
+	"sync"
 
 	cli "github.com/urfave/cli/v3"
 )
@@ -48,3 +49,30 @@ func takesCommand(c *cli.Command) { _ = c }
 // generic is allowed: a pointer to a type parameter is a generic seam the
 // analyzer cannot judge.
 func generic[T any](cfg *T) { _ = cfg }
+
+// Engine declares only pointer-receiver methods: a value is unusable, so the
+// pointer is its idiomatic convention — allowed semantically, no allowlist.
+type Engine struct{ n int }
+
+func (e *Engine) Run() { e.n++ }
+
+func takesEngine(e *Engine) { _ = e }
+
+// Mixed has a value-receiver method, so values are usable and the pointer
+// parameter is flagged.
+type Mixed struct{ n int }
+
+func (m Mixed) Get() int { return m.n }
+
+func (m *Mixed) Set(n int) { m.n = n }
+
+func takesMixed(m *Mixed) { _ = m } // want `pointer parameter`
+
+// guarded transitively holds a lock (vet copylocks criterion): uncopyable,
+// so the pointer is required — allowed semantically.
+type guarded struct {
+	mu sync.Mutex
+	n  int
+}
+
+func takesGuarded(g *guarded) { _ = g }
