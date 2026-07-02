@@ -63,7 +63,7 @@ var Registration = goyze.Registration{
 
 // run reports each disallowed pointer parameter.
 func run(pass *analysis.Pass) (any, error) {
-	allow := buildAllow(allowExtra)
+	allow := buildAllow(allowCSV(allowExtra))
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 	insp.Preorder([]ast.Node{(*ast.FuncType)(nil)}, func(n ast.Node) {
 		for _, field := range n.(*ast.FuncType).Params.List {
@@ -73,9 +73,13 @@ func run(pass *analysis.Pass) (any, error) {
 	return nil, nil
 }
 
+// allowCSV is the raw comma-separated -allow flag value listing extra
+// fully-qualified pointer-parameter types.
+type allowCSV string
+
 // buildAllow merges the generated standard-library allowlist and the baked-in
 // framework types with the configured extras.
-func buildAllow(extra string) map[string]bool {
+func buildAllow(extra allowCSV) map[string]bool {
 	allow := make(map[string]bool, len(stdPointerParams)+len(allowedPointerParams))
 	for name := range stdPointerParams {
 		allow[name] = true
@@ -89,11 +93,11 @@ func buildAllow(extra string) map[string]bool {
 	return allow
 }
 
-func splitNonEmpty(value string) []string {
+func splitNonEmpty(value allowCSV) []string {
 	if value == "" {
 		return nil
 	}
-	return strings.Split(value, ",")
+	return strings.Split(string(value), ",")
 }
 
 // check reports a parameter whose type is a non-idiomatic pointer.
