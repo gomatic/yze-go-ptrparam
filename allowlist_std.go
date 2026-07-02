@@ -7,478 +7,478 @@ package ptrparam
 // only pointer-receiver methods (a value is unusable). Regenerate with
 // `go run discover.go` after a toolchain bump.
 var stdPointerParams = map[string]bool{
-	"archive/tar.Header": true, // pointer-only methods
-	"archive/tar.Reader": true, // pointer-only methods
-	"archive/tar.Writer": true, // pointer-only methods
-	"archive/zip.File": true, // pointer-only methods
-	"archive/zip.FileHeader": true, // pointer-only methods
-	"archive/zip.ReadCloser": true, // uncopyable
-	"archive/zip.Reader": true, // uncopyable
-	"archive/zip.Writer": true, // pointer-only methods
-	"bufio.Reader": true, // pointer-only methods
-	"bufio.Scanner": true, // pointer-only methods
-	"bufio.Writer": true, // pointer-only methods
-	"bytes.Buffer": true, // pointer-only methods
-	"bytes.Reader": true, // pointer-only methods
-	"compress/flate.ReadError": true, // pointer-only methods
-	"compress/flate.WriteError": true, // pointer-only methods
-	"compress/flate.Writer": true, // pointer-only methods
-	"compress/gzip.Reader": true, // pointer-only methods
-	"compress/gzip.Writer": true, // pointer-only methods
-	"compress/lzw.Reader": true, // pointer-only methods
-	"compress/lzw.Writer": true, // pointer-only methods
-	"compress/zlib.Writer": true, // pointer-only methods
-	"container/list.Element": true, // pointer-only methods
-	"container/list.List": true, // pointer-only methods
-	"container/ring.Ring": true, // pointer-only methods
-	"crypto/dsa.Parameters": true, // stdlib passes it
-	"crypto/dsa.PrivateKey": true, // stdlib passes it
-	"crypto/dsa.PublicKey": true, // stdlib passes it
-	"crypto/ecdh.PrivateKey": true, // pointer-only methods
-	"crypto/ecdh.PublicKey": true, // pointer-only methods
-	"crypto/ecdsa.PrivateKey": true, // pointer-only methods
-	"crypto/ecdsa.PublicKey": true, // pointer-only methods
-	"crypto/ed25519.Options": true, // pointer-only methods
-	"crypto/elliptic.CurveParams": true, // pointer-only methods
-	"crypto/hpke.Recipient": true, // pointer-only methods
-	"crypto/hpke.Sender": true, // pointer-only methods
-	"crypto/mlkem.DecapsulationKey1024": true, // pointer-only methods
-	"crypto/mlkem.DecapsulationKey768": true, // pointer-only methods
-	"crypto/mlkem.EncapsulationKey1024": true, // pointer-only methods
-	"crypto/mlkem.EncapsulationKey768": true, // pointer-only methods
-	"crypto/rc4.Cipher": true, // pointer-only methods
-	"crypto/rsa.OAEPOptions": true, // stdlib passes it
-	"crypto/rsa.PSSOptions": true, // pointer-only methods
-	"crypto/rsa.PrivateKey": true, // pointer-only methods
-	"crypto/rsa.PublicKey": true, // pointer-only methods
-	"crypto/sha3.SHA3": true, // pointer-only methods
-	"crypto/sha3.SHAKE": true, // pointer-only methods
-	"crypto/tls.Certificate": true, // stdlib passes it
-	"crypto/tls.CertificateRequestInfo": true, // pointer-only methods
+	"archive/tar.Header":                      true, // pointer-only methods
+	"archive/tar.Reader":                      true, // pointer-only methods
+	"archive/tar.Writer":                      true, // pointer-only methods
+	"archive/zip.File":                        true, // pointer-only methods
+	"archive/zip.FileHeader":                  true, // pointer-only methods
+	"archive/zip.ReadCloser":                  true, // uncopyable
+	"archive/zip.Reader":                      true, // uncopyable
+	"archive/zip.Writer":                      true, // pointer-only methods
+	"bufio.Reader":                            true, // pointer-only methods
+	"bufio.Scanner":                           true, // pointer-only methods
+	"bufio.Writer":                            true, // pointer-only methods
+	"bytes.Buffer":                            true, // pointer-only methods
+	"bytes.Reader":                            true, // pointer-only methods
+	"compress/flate.ReadError":                true, // pointer-only methods
+	"compress/flate.WriteError":               true, // pointer-only methods
+	"compress/flate.Writer":                   true, // pointer-only methods
+	"compress/gzip.Reader":                    true, // pointer-only methods
+	"compress/gzip.Writer":                    true, // pointer-only methods
+	"compress/lzw.Reader":                     true, // pointer-only methods
+	"compress/lzw.Writer":                     true, // pointer-only methods
+	"compress/zlib.Writer":                    true, // pointer-only methods
+	"container/list.Element":                  true, // pointer-only methods
+	"container/list.List":                     true, // pointer-only methods
+	"container/ring.Ring":                     true, // pointer-only methods
+	"crypto/dsa.Parameters":                   true, // stdlib passes it
+	"crypto/dsa.PrivateKey":                   true, // stdlib passes it
+	"crypto/dsa.PublicKey":                    true, // stdlib passes it
+	"crypto/ecdh.PrivateKey":                  true, // pointer-only methods
+	"crypto/ecdh.PublicKey":                   true, // pointer-only methods
+	"crypto/ecdsa.PrivateKey":                 true, // pointer-only methods
+	"crypto/ecdsa.PublicKey":                  true, // pointer-only methods
+	"crypto/ed25519.Options":                  true, // pointer-only methods
+	"crypto/elliptic.CurveParams":             true, // pointer-only methods
+	"crypto/hpke.Recipient":                   true, // pointer-only methods
+	"crypto/hpke.Sender":                      true, // pointer-only methods
+	"crypto/mlkem.DecapsulationKey1024":       true, // pointer-only methods
+	"crypto/mlkem.DecapsulationKey768":        true, // pointer-only methods
+	"crypto/mlkem.EncapsulationKey1024":       true, // pointer-only methods
+	"crypto/mlkem.EncapsulationKey768":        true, // pointer-only methods
+	"crypto/rc4.Cipher":                       true, // pointer-only methods
+	"crypto/rsa.OAEPOptions":                  true, // stdlib passes it
+	"crypto/rsa.PSSOptions":                   true, // pointer-only methods
+	"crypto/rsa.PrivateKey":                   true, // pointer-only methods
+	"crypto/rsa.PublicKey":                    true, // pointer-only methods
+	"crypto/sha3.SHA3":                        true, // pointer-only methods
+	"crypto/sha3.SHAKE":                       true, // pointer-only methods
+	"crypto/tls.Certificate":                  true, // stdlib passes it
+	"crypto/tls.CertificateRequestInfo":       true, // pointer-only methods
 	"crypto/tls.CertificateVerificationError": true, // pointer-only methods
-	"crypto/tls.ClientHelloInfo": true, // pointer-only methods
-	"crypto/tls.ClientSessionState": true, // pointer-only methods
-	"crypto/tls.Config": true, // uncopyable
-	"crypto/tls.Conn": true, // uncopyable
-	"crypto/tls.ConnectionState": true, // pointer-only methods
-	"crypto/tls.Dialer": true, // pointer-only methods
-	"crypto/tls.ECHRejectionError": true, // pointer-only methods
-	"crypto/tls.QUICConfig": true, // stdlib passes it
-	"crypto/tls.QUICConn": true, // pointer-only methods
-	"crypto/tls.SessionState": true, // pointer-only methods
-	"crypto/x509.CertPool": true, // pointer-only methods
-	"crypto/x509.Certificate": true, // pointer-only methods
-	"crypto/x509.CertificateRequest": true, // pointer-only methods
-	"crypto/x509.RevocationList": true, // pointer-only methods
-	"crypto/x509/pkix.CertificateList": true, // pointer-only methods
-	"crypto/x509/pkix.RDNSequence": true, // stdlib passes it
-	"database/sql.ColumnType": true, // pointer-only methods
-	"database/sql.Conn": true, // uncopyable
-	"database/sql.DB": true, // uncopyable
-	"database/sql.Row": true, // pointer-only methods
-	"database/sql.Rows": true, // uncopyable
-	"database/sql.Stmt": true, // uncopyable
-	"database/sql.Tx": true, // uncopyable
-	"database/sql.TxOptions": true, // stdlib passes it
-	"debug/dwarf.ArrayType": true, // pointer-only methods
-	"debug/dwarf.BasicType": true, // pointer-only methods
-	"debug/dwarf.CommonType": true, // pointer-only methods
-	"debug/dwarf.Data": true, // pointer-only methods
-	"debug/dwarf.DotDotDotType": true, // pointer-only methods
-	"debug/dwarf.Entry": true, // pointer-only methods
-	"debug/dwarf.EnumType": true, // pointer-only methods
-	"debug/dwarf.FuncType": true, // pointer-only methods
-	"debug/dwarf.LineEntry": true, // stdlib passes it
-	"debug/dwarf.LineReader": true, // pointer-only methods
-	"debug/dwarf.PtrType": true, // pointer-only methods
-	"debug/dwarf.QualType": true, // pointer-only methods
-	"debug/dwarf.Reader": true, // pointer-only methods
-	"debug/dwarf.StructType": true, // pointer-only methods
-	"debug/dwarf.TypedefType": true, // pointer-only methods
-	"debug/dwarf.UnsupportedType": true, // pointer-only methods
-	"debug/dwarf.VoidType": true, // pointer-only methods
-	"debug/elf.File": true, // pointer-only methods
-	"debug/elf.FormatError": true, // pointer-only methods
-	"debug/elf.Prog": true, // pointer-only methods
-	"debug/elf.Section": true, // pointer-only methods
-	"debug/gosym.DecodingError": true, // pointer-only methods
-	"debug/gosym.LineTable": true, // uncopyable
-	"debug/gosym.Sym": true, // pointer-only methods
-	"debug/gosym.Table": true, // pointer-only methods
-	"debug/gosym.UnknownLineError": true, // pointer-only methods
-	"debug/macho.FatFile": true, // pointer-only methods
-	"debug/macho.File": true, // pointer-only methods
-	"debug/macho.FormatError": true, // pointer-only methods
-	"debug/macho.Section": true, // pointer-only methods
-	"debug/macho.Segment": true, // pointer-only methods
-	"debug/pe.COFFSymbol": true, // pointer-only methods
-	"debug/pe.File": true, // pointer-only methods
-	"debug/pe.FormatError": true, // pointer-only methods
-	"debug/pe.Section": true, // pointer-only methods
-	"debug/plan9obj.File": true, // pointer-only methods
-	"debug/plan9obj.Section": true, // pointer-only methods
-	"encoding/base32.Encoding": true, // stdlib passes it
-	"encoding/base64.Encoding": true, // stdlib passes it
-	"encoding/csv.ParseError": true, // pointer-only methods
-	"encoding/csv.Reader": true, // pointer-only methods
-	"encoding/csv.Writer": true, // pointer-only methods
-	"encoding/gob.Decoder": true, // uncopyable
-	"encoding/gob.Encoder": true, // uncopyable
-	"encoding/json.Decoder": true, // pointer-only methods
-	"encoding/json.Encoder": true, // pointer-only methods
-	"encoding/json.InvalidUTF8Error": true, // pointer-only methods
-	"encoding/json.InvalidUnmarshalError": true, // pointer-only methods
-	"encoding/json.MarshalerError": true, // pointer-only methods
-	"encoding/json.SyntaxError": true, // pointer-only methods
-	"encoding/json.UnmarshalFieldError": true, // pointer-only methods
-	"encoding/json.UnmarshalTypeError": true, // pointer-only methods
-	"encoding/json.UnsupportedTypeError": true, // pointer-only methods
-	"encoding/json.UnsupportedValueError": true, // pointer-only methods
-	"encoding/pem.Block": true, // stdlib passes it
-	"encoding/xml.Decoder": true, // pointer-only methods
-	"encoding/xml.Encoder": true, // pointer-only methods
-	"encoding/xml.StartElement": true, // stdlib passes it
-	"encoding/xml.SyntaxError": true, // pointer-only methods
-	"encoding/xml.TagPathError": true, // pointer-only methods
-	"encoding/xml.UnsupportedTypeError": true, // pointer-only methods
-	"expvar.Float": true, // uncopyable
-	"expvar.Int": true, // uncopyable
-	"expvar.Map": true, // uncopyable
-	"expvar.String": true, // pointer-only methods
-	"flag.Flag": true, // stdlib passes it
-	"flag.FlagSet": true, // pointer-only methods
-	"go/ast.ArrayType": true, // pointer-only methods
-	"go/ast.AssignStmt": true, // pointer-only methods
-	"go/ast.BadDecl": true, // pointer-only methods
-	"go/ast.BadExpr": true, // pointer-only methods
-	"go/ast.BadStmt": true, // pointer-only methods
-	"go/ast.BasicLit": true, // pointer-only methods
-	"go/ast.BinaryExpr": true, // pointer-only methods
-	"go/ast.BlockStmt": true, // pointer-only methods
-	"go/ast.BranchStmt": true, // pointer-only methods
-	"go/ast.CallExpr": true, // pointer-only methods
-	"go/ast.CaseClause": true, // pointer-only methods
-	"go/ast.ChanType": true, // pointer-only methods
-	"go/ast.CommClause": true, // pointer-only methods
-	"go/ast.Comment": true, // pointer-only methods
-	"go/ast.CommentGroup": true, // pointer-only methods
-	"go/ast.CompositeLit": true, // pointer-only methods
-	"go/ast.DeclStmt": true, // pointer-only methods
-	"go/ast.DeferStmt": true, // pointer-only methods
-	"go/ast.Directive": true, // pointer-only methods
-	"go/ast.Ellipsis": true, // pointer-only methods
-	"go/ast.EmptyStmt": true, // pointer-only methods
-	"go/ast.ExprStmt": true, // pointer-only methods
-	"go/ast.Field": true, // pointer-only methods
-	"go/ast.FieldList": true, // pointer-only methods
-	"go/ast.File": true, // pointer-only methods
-	"go/ast.ForStmt": true, // pointer-only methods
-	"go/ast.FuncDecl": true, // pointer-only methods
-	"go/ast.FuncLit": true, // pointer-only methods
-	"go/ast.FuncType": true, // pointer-only methods
-	"go/ast.GenDecl": true, // pointer-only methods
-	"go/ast.GoStmt": true, // pointer-only methods
-	"go/ast.Ident": true, // pointer-only methods
-	"go/ast.IfStmt": true, // pointer-only methods
-	"go/ast.ImportSpec": true, // pointer-only methods
-	"go/ast.IncDecStmt": true, // pointer-only methods
-	"go/ast.IndexExpr": true, // pointer-only methods
-	"go/ast.IndexListExpr": true, // pointer-only methods
-	"go/ast.InterfaceType": true, // pointer-only methods
-	"go/ast.KeyValueExpr": true, // pointer-only methods
-	"go/ast.LabeledStmt": true, // pointer-only methods
-	"go/ast.MapType": true, // pointer-only methods
-	"go/ast.Object": true, // pointer-only methods
-	"go/ast.Package": true, // pointer-only methods
-	"go/ast.ParenExpr": true, // pointer-only methods
-	"go/ast.RangeStmt": true, // pointer-only methods
-	"go/ast.ReturnStmt": true, // pointer-only methods
-	"go/ast.Scope": true, // pointer-only methods
-	"go/ast.SelectStmt": true, // pointer-only methods
-	"go/ast.SelectorExpr": true, // pointer-only methods
-	"go/ast.SendStmt": true, // pointer-only methods
-	"go/ast.SliceExpr": true, // pointer-only methods
-	"go/ast.StarExpr": true, // pointer-only methods
-	"go/ast.StructType": true, // pointer-only methods
-	"go/ast.SwitchStmt": true, // pointer-only methods
-	"go/ast.TypeAssertExpr": true, // pointer-only methods
-	"go/ast.TypeSpec": true, // pointer-only methods
-	"go/ast.TypeSwitchStmt": true, // pointer-only methods
-	"go/ast.UnaryExpr": true, // pointer-only methods
-	"go/ast.ValueSpec": true, // pointer-only methods
-	"go/build.Context": true, // pointer-only methods
-	"go/build.MultiplePackageError": true, // pointer-only methods
-	"go/build.NoGoError": true, // pointer-only methods
-	"go/build.Package": true, // pointer-only methods
-	"go/build/constraint.AndExpr": true, // pointer-only methods
-	"go/build/constraint.NotExpr": true, // pointer-only methods
-	"go/build/constraint.OrExpr": true, // pointer-only methods
-	"go/build/constraint.SyntaxError": true, // pointer-only methods
-	"go/build/constraint.TagExpr": true, // pointer-only methods
-	"go/doc.Package": true, // pointer-only methods
-	"go/doc/comment.Doc": true, // stdlib passes it
-	"go/doc/comment.DocLink": true, // pointer-only methods
-	"go/doc/comment.Heading": true, // pointer-only methods
-	"go/doc/comment.List": true, // pointer-only methods
-	"go/doc/comment.Parser": true, // pointer-only methods
-	"go/doc/comment.Printer": true, // pointer-only methods
-	"go/printer.Config": true, // pointer-only methods
-	"go/scanner.Scanner": true, // pointer-only methods
-	"go/token.File": true, // uncopyable
-	"go/token.FileSet": true, // uncopyable
-	"go/types.Alias": true, // pointer-only methods
-	"go/types.ArgumentError": true, // pointer-only methods
-	"go/types.Array": true, // pointer-only methods
-	"go/types.Basic": true, // pointer-only methods
-	"go/types.Builtin": true, // pointer-only methods
-	"go/types.Chan": true, // pointer-only methods
-	"go/types.Checker": true, // pointer-only methods
-	"go/types.Config": true, // pointer-only methods
-	"go/types.Const": true, // pointer-only methods
-	"go/types.Context": true, // uncopyable
-	"go/types.Func": true, // pointer-only methods
-	"go/types.Info": true, // pointer-only methods
-	"go/types.Initializer": true, // pointer-only methods
-	"go/types.Interface": true, // pointer-only methods
-	"go/types.Label": true, // pointer-only methods
-	"go/types.Map": true, // pointer-only methods
-	"go/types.MethodSet": true, // pointer-only methods
-	"go/types.Named": true, // uncopyable
-	"go/types.Nil": true, // pointer-only methods
-	"go/types.Package": true, // pointer-only methods
-	"go/types.PkgName": true, // pointer-only methods
-	"go/types.Pointer": true, // pointer-only methods
-	"go/types.Scope": true, // pointer-only methods
-	"go/types.Selection": true, // pointer-only methods
-	"go/types.Signature": true, // pointer-only methods
-	"go/types.Slice": true, // pointer-only methods
-	"go/types.StdSizes": true, // pointer-only methods
-	"go/types.Struct": true, // pointer-only methods
-	"go/types.Term": true, // pointer-only methods
-	"go/types.Tuple": true, // pointer-only methods
-	"go/types.TypeList": true, // pointer-only methods
-	"go/types.TypeName": true, // pointer-only methods
-	"go/types.TypeParam": true, // pointer-only methods
-	"go/types.TypeParamList": true, // pointer-only methods
-	"go/types.Union": true, // pointer-only methods
-	"go/types.Var": true, // pointer-only methods
-	"hash/crc32.Table": true, // stdlib passes it
-	"hash/crc64.Table": true, // stdlib passes it
-	"hash/maphash.Hash": true, // pointer-only methods
-	"html/template.Error": true, // pointer-only methods
-	"html/template.Template": true, // pointer-only methods
-	"image.Alpha": true, // pointer-only methods
-	"image.Alpha16": true, // pointer-only methods
-	"image.CMYK": true, // pointer-only methods
-	"image.Gray": true, // pointer-only methods
-	"image.Gray16": true, // pointer-only methods
-	"image.NRGBA": true, // pointer-only methods
-	"image.NRGBA64": true, // pointer-only methods
-	"image.NYCbCrA": true, // pointer-only methods
-	"image.Paletted": true, // pointer-only methods
-	"image.RGBA": true, // pointer-only methods
-	"image.RGBA64": true, // pointer-only methods
-	"image.Uniform": true, // pointer-only methods
-	"image.YCbCr": true, // pointer-only methods
-	"image/gif.GIF": true, // stdlib passes it
-	"image/gif.Options": true, // stdlib passes it
-	"image/jpeg.Options": true, // stdlib passes it
-	"image/png.Encoder": true, // pointer-only methods
-	"index/suffixarray.Index": true, // pointer-only methods
-	"io.LimitedReader": true, // pointer-only methods
-	"io.OffsetWriter": true, // pointer-only methods
-	"io.PipeReader": true, // uncopyable
-	"io.PipeWriter": true, // uncopyable
-	"io.SectionReader": true, // pointer-only methods
-	"io/fs.PathError": true, // pointer-only methods
-	"log.Logger": true, // uncopyable
-	"log/slog.HandlerOptions": true, // stdlib passes it
-	"log/slog.JSONHandler": true, // pointer-only methods
-	"log/slog.LevelVar": true, // uncopyable
-	"log/slog.Logger": true, // pointer-only methods
-	"log/slog.MultiHandler": true, // pointer-only methods
-	"log/slog.TextHandler": true, // pointer-only methods
-	"log/syslog.Writer": true, // uncopyable
-	"math/big.Float": true, // pointer-only methods
-	"math/big.Int": true, // pointer-only methods
-	"math/big.Rat": true, // pointer-only methods
-	"math/rand.Rand": true, // pointer-only methods
-	"math/rand.Zipf": true, // pointer-only methods
-	"math/rand/v2.ChaCha8": true, // pointer-only methods
-	"math/rand/v2.PCG": true, // pointer-only methods
-	"math/rand/v2.Rand": true, // pointer-only methods
-	"math/rand/v2.Zipf": true, // pointer-only methods
-	"mime.WordDecoder": true, // pointer-only methods
-	"mime/multipart.FileHeader": true, // pointer-only methods
-	"mime/multipart.Form": true, // pointer-only methods
-	"mime/multipart.Part": true, // pointer-only methods
-	"mime/multipart.Reader": true, // pointer-only methods
-	"mime/multipart.Writer": true, // pointer-only methods
-	"mime/quotedprintable.Reader": true, // pointer-only methods
-	"mime/quotedprintable.Writer": true, // pointer-only methods
-	"net.AddrError": true, // pointer-only methods
-	"net.Buffers": true, // pointer-only methods
-	"net.DNSConfigError": true, // pointer-only methods
-	"net.DNSError": true, // pointer-only methods
-	"net.Dialer": true, // pointer-only methods
-	"net.IPAddr": true, // pointer-only methods
-	"net.IPConn": true, // pointer-only methods
-	"net.IPNet": true, // pointer-only methods
-	"net.Interface": true, // pointer-only methods
-	"net.ListenConfig": true, // pointer-only methods
-	"net.OpError": true, // pointer-only methods
-	"net.ParseError": true, // pointer-only methods
-	"net.Resolver": true, // uncopyable
-	"net.TCPAddr": true, // pointer-only methods
-	"net.TCPConn": true, // pointer-only methods
-	"net.TCPListener": true, // pointer-only methods
-	"net.UDPAddr": true, // pointer-only methods
-	"net.UDPConn": true, // pointer-only methods
-	"net.UnixAddr": true, // pointer-only methods
-	"net.UnixConn": true, // pointer-only methods
-	"net.UnixListener": true, // uncopyable
-	"net/http.Client": true, // pointer-only methods
-	"net/http.ClientConn": true, // uncopyable
-	"net/http.Cookie": true, // pointer-only methods
-	"net/http.CrossOriginProtection": true, // uncopyable
-	"net/http.MaxBytesError": true, // pointer-only methods
-	"net/http.ProtocolError": true, // pointer-only methods
-	"net/http.Request": true, // pointer-only methods
-	"net/http.Response": true, // pointer-only methods
-	"net/http.ResponseController": true, // pointer-only methods
-	"net/http.ServeMux": true, // uncopyable
-	"net/http.Server": true, // uncopyable
-	"net/http.Transport": true, // uncopyable
-	"net/http/cgi.Handler": true, // pointer-only methods
-	"net/http/cookiejar.Jar": true, // uncopyable
-	"net/http/cookiejar.Options": true, // stdlib passes it
-	"net/http/httptest.ResponseRecorder": true, // pointer-only methods
-	"net/http/httptest.Server": true, // uncopyable
-	"net/http/httptrace.ClientTrace": true, // stdlib passes it
-	"net/http/httputil.ClientConn": true, // uncopyable
-	"net/http/httputil.ProxyRequest": true, // pointer-only methods
-	"net/http/httputil.ReverseProxy": true, // pointer-only methods
-	"net/http/httputil.ServerConn": true, // uncopyable
-	"net/mail.Address": true, // pointer-only methods
-	"net/mail.AddressParser": true, // pointer-only methods
-	"net/rpc.Client": true, // uncopyable
-	"net/rpc.Server": true, // uncopyable
-	"net/smtp.Client": true, // pointer-only methods
-	"net/textproto.Conn": true, // uncopyable
-	"net/textproto.Error": true, // pointer-only methods
-	"net/textproto.Pipeline": true, // uncopyable
-	"net/textproto.Reader": true, // pointer-only methods
-	"net/textproto.Writer": true, // pointer-only methods
-	"net/url.Error": true, // pointer-only methods
-	"net/url.URL": true, // pointer-only methods
-	"net/url.Userinfo": true, // pointer-only methods
-	"os.File": true, // pointer-only methods
-	"os.LinkError": true, // pointer-only methods
-	"os.ProcAttr": true, // stdlib passes it
-	"os.Process": true, // uncopyable
-	"os.ProcessState": true, // pointer-only methods
-	"os.Root": true, // pointer-only methods
-	"os.SyscallError": true, // pointer-only methods
-	"os/exec.Cmd": true, // pointer-only methods
-	"os/exec.Error": true, // pointer-only methods
-	"os/exec.ExitError": true, // pointer-only methods
-	"os/user.User": true, // pointer-only methods
-	"plugin.Plugin": true, // pointer-only methods
-	"reflect.MapIter": true, // pointer-only methods
-	"reflect.ValueError": true, // pointer-only methods
-	"regexp.Regexp": true, // pointer-only methods
-	"regexp/syntax.Error": true, // pointer-only methods
-	"regexp/syntax.Inst": true, // pointer-only methods
-	"regexp/syntax.Prog": true, // pointer-only methods
-	"regexp/syntax.Regexp": true, // pointer-only methods
-	"runtime.Frames": true, // pointer-only methods
-	"runtime.Func": true, // pointer-only methods
-	"runtime.MemProfileRecord": true, // pointer-only methods
-	"runtime.MemStats": true, // stdlib passes it
-	"runtime.PanicNilError": true, // pointer-only methods
-	"runtime.Pinner": true, // pointer-only methods
-	"runtime.StackRecord": true, // pointer-only methods
-	"runtime.TypeAssertionError": true, // pointer-only methods
-	"runtime/debug.BuildInfo": true, // pointer-only methods
-	"runtime/debug.GCStats": true, // stdlib passes it
-	"runtime/pprof.Profile": true, // uncopyable
-	"runtime/trace.FlightRecorder": true, // uncopyable
-	"runtime/trace.Region": true, // pointer-only methods
-	"runtime/trace.Task": true, // pointer-only methods
-	"strconv.NumError": true, // pointer-only methods
-	"strings.Builder": true, // pointer-only methods
-	"strings.Reader": true, // pointer-only methods
-	"strings.Replacer": true, // uncopyable
-	"sync.Cond": true, // uncopyable
-	"sync.Map": true, // uncopyable
-	"sync.Mutex": true, // uncopyable
-	"sync.Once": true, // uncopyable
-	"sync.Pool": true, // uncopyable
-	"sync.RWMutex": true, // uncopyable
-	"sync.WaitGroup": true, // uncopyable
-	"sync/atomic.Bool": true, // uncopyable
-	"sync/atomic.Int32": true, // uncopyable
-	"sync/atomic.Int64": true, // uncopyable
-	"sync/atomic.Pointer": true, // uncopyable
-	"sync/atomic.Uint32": true, // uncopyable
-	"sync/atomic.Uint64": true, // uncopyable
-	"sync/atomic.Uintptr": true, // uncopyable
-	"sync/atomic.Value": true, // pointer-only methods
-	"syscall.Cmsghdr": true, // pointer-only methods
-	"syscall.FdSet": true, // stdlib passes it
-	"syscall.Flock_t": true, // stdlib passes it
-	"syscall.ICMPv6Filter": true, // stdlib passes it
-	"syscall.IPMreq": true, // stdlib passes it
-	"syscall.IPv6Mreq": true, // stdlib passes it
-	"syscall.Iovec": true, // pointer-only methods
-	"syscall.Kevent_t": true, // stdlib passes it
-	"syscall.Linger": true, // stdlib passes it
-	"syscall.Msghdr": true, // pointer-only methods
-	"syscall.ProcAttr": true, // stdlib passes it
-	"syscall.Rlimit": true, // stdlib passes it
-	"syscall.Rusage": true, // stdlib passes it
-	"syscall.SocketControlMessage": true, // stdlib passes it
-	"syscall.Stat_t": true, // stdlib passes it
-	"syscall.Statfs_t": true, // stdlib passes it
-	"syscall.Timespec": true, // pointer-only methods
-	"syscall.Timeval": true, // pointer-only methods
-	"testing.B": true, // uncopyable
-	"testing.F": true, // uncopyable
-	"testing.M": true, // uncopyable
-	"testing.PB": true, // pointer-only methods
-	"testing.T": true, // uncopyable
-	"testing/quick.CheckEqualError": true, // pointer-only methods
-	"testing/quick.CheckError": true, // pointer-only methods
-	"testing/quick.Config": true, // stdlib passes it
-	"text/scanner.Scanner": true, // pointer-only methods
-	"text/tabwriter.Writer": true, // pointer-only methods
-	"text/template.Template": true, // pointer-only methods
-	"text/template/parse.ActionNode": true, // pointer-only methods
-	"text/template/parse.BoolNode": true, // pointer-only methods
-	"text/template/parse.BranchNode": true, // pointer-only methods
-	"text/template/parse.BreakNode": true, // pointer-only methods
-	"text/template/parse.ChainNode": true, // pointer-only methods
-	"text/template/parse.CommandNode": true, // pointer-only methods
-	"text/template/parse.CommentNode": true, // pointer-only methods
-	"text/template/parse.ContinueNode": true, // pointer-only methods
-	"text/template/parse.DotNode": true, // pointer-only methods
-	"text/template/parse.FieldNode": true, // pointer-only methods
-	"text/template/parse.IdentifierNode": true, // pointer-only methods
-	"text/template/parse.IfNode": true, // pointer-only methods
-	"text/template/parse.ListNode": true, // pointer-only methods
-	"text/template/parse.NilNode": true, // pointer-only methods
-	"text/template/parse.NumberNode": true, // pointer-only methods
-	"text/template/parse.PipeNode": true, // pointer-only methods
-	"text/template/parse.RangeNode": true, // pointer-only methods
-	"text/template/parse.StringNode": true, // pointer-only methods
-	"text/template/parse.TemplateNode": true, // pointer-only methods
-	"text/template/parse.TextNode": true, // pointer-only methods
-	"text/template/parse.Tree": true, // pointer-only methods
-	"text/template/parse.VariableNode": true, // pointer-only methods
-	"text/template/parse.WithNode": true, // pointer-only methods
-	"time.Location": true, // pointer-only methods
-	"time.ParseError": true, // pointer-only methods
-	"time.Ticker": true, // pointer-only methods
-	"time.Timer": true, // pointer-only methods
-	"unicode.RangeTable": true, // stdlib passes it
+	"crypto/tls.ClientHelloInfo":              true, // pointer-only methods
+	"crypto/tls.ClientSessionState":           true, // pointer-only methods
+	"crypto/tls.Config":                       true, // uncopyable
+	"crypto/tls.Conn":                         true, // uncopyable
+	"crypto/tls.ConnectionState":              true, // pointer-only methods
+	"crypto/tls.Dialer":                       true, // pointer-only methods
+	"crypto/tls.ECHRejectionError":            true, // pointer-only methods
+	"crypto/tls.QUICConfig":                   true, // stdlib passes it
+	"crypto/tls.QUICConn":                     true, // pointer-only methods
+	"crypto/tls.SessionState":                 true, // pointer-only methods
+	"crypto/x509.CertPool":                    true, // pointer-only methods
+	"crypto/x509.Certificate":                 true, // pointer-only methods
+	"crypto/x509.CertificateRequest":          true, // pointer-only methods
+	"crypto/x509.RevocationList":              true, // pointer-only methods
+	"crypto/x509/pkix.CertificateList":        true, // pointer-only methods
+	"crypto/x509/pkix.RDNSequence":            true, // stdlib passes it
+	"database/sql.ColumnType":                 true, // pointer-only methods
+	"database/sql.Conn":                       true, // uncopyable
+	"database/sql.DB":                         true, // uncopyable
+	"database/sql.Row":                        true, // pointer-only methods
+	"database/sql.Rows":                       true, // uncopyable
+	"database/sql.Stmt":                       true, // uncopyable
+	"database/sql.Tx":                         true, // uncopyable
+	"database/sql.TxOptions":                  true, // stdlib passes it
+	"debug/dwarf.ArrayType":                   true, // pointer-only methods
+	"debug/dwarf.BasicType":                   true, // pointer-only methods
+	"debug/dwarf.CommonType":                  true, // pointer-only methods
+	"debug/dwarf.Data":                        true, // pointer-only methods
+	"debug/dwarf.DotDotDotType":               true, // pointer-only methods
+	"debug/dwarf.Entry":                       true, // pointer-only methods
+	"debug/dwarf.EnumType":                    true, // pointer-only methods
+	"debug/dwarf.FuncType":                    true, // pointer-only methods
+	"debug/dwarf.LineEntry":                   true, // stdlib passes it
+	"debug/dwarf.LineReader":                  true, // pointer-only methods
+	"debug/dwarf.PtrType":                     true, // pointer-only methods
+	"debug/dwarf.QualType":                    true, // pointer-only methods
+	"debug/dwarf.Reader":                      true, // pointer-only methods
+	"debug/dwarf.StructType":                  true, // pointer-only methods
+	"debug/dwarf.TypedefType":                 true, // pointer-only methods
+	"debug/dwarf.UnsupportedType":             true, // pointer-only methods
+	"debug/dwarf.VoidType":                    true, // pointer-only methods
+	"debug/elf.File":                          true, // pointer-only methods
+	"debug/elf.FormatError":                   true, // pointer-only methods
+	"debug/elf.Prog":                          true, // pointer-only methods
+	"debug/elf.Section":                       true, // pointer-only methods
+	"debug/gosym.DecodingError":               true, // pointer-only methods
+	"debug/gosym.LineTable":                   true, // uncopyable
+	"debug/gosym.Sym":                         true, // pointer-only methods
+	"debug/gosym.Table":                       true, // pointer-only methods
+	"debug/gosym.UnknownLineError":            true, // pointer-only methods
+	"debug/macho.FatFile":                     true, // pointer-only methods
+	"debug/macho.File":                        true, // pointer-only methods
+	"debug/macho.FormatError":                 true, // pointer-only methods
+	"debug/macho.Section":                     true, // pointer-only methods
+	"debug/macho.Segment":                     true, // pointer-only methods
+	"debug/pe.COFFSymbol":                     true, // pointer-only methods
+	"debug/pe.File":                           true, // pointer-only methods
+	"debug/pe.FormatError":                    true, // pointer-only methods
+	"debug/pe.Section":                        true, // pointer-only methods
+	"debug/plan9obj.File":                     true, // pointer-only methods
+	"debug/plan9obj.Section":                  true, // pointer-only methods
+	"encoding/base32.Encoding":                true, // stdlib passes it
+	"encoding/base64.Encoding":                true, // stdlib passes it
+	"encoding/csv.ParseError":                 true, // pointer-only methods
+	"encoding/csv.Reader":                     true, // pointer-only methods
+	"encoding/csv.Writer":                     true, // pointer-only methods
+	"encoding/gob.Decoder":                    true, // uncopyable
+	"encoding/gob.Encoder":                    true, // uncopyable
+	"encoding/json.Decoder":                   true, // pointer-only methods
+	"encoding/json.Encoder":                   true, // pointer-only methods
+	"encoding/json.InvalidUTF8Error":          true, // pointer-only methods
+	"encoding/json.InvalidUnmarshalError":     true, // pointer-only methods
+	"encoding/json.MarshalerError":            true, // pointer-only methods
+	"encoding/json.SyntaxError":               true, // pointer-only methods
+	"encoding/json.UnmarshalFieldError":       true, // pointer-only methods
+	"encoding/json.UnmarshalTypeError":        true, // pointer-only methods
+	"encoding/json.UnsupportedTypeError":      true, // pointer-only methods
+	"encoding/json.UnsupportedValueError":     true, // pointer-only methods
+	"encoding/pem.Block":                      true, // stdlib passes it
+	"encoding/xml.Decoder":                    true, // pointer-only methods
+	"encoding/xml.Encoder":                    true, // pointer-only methods
+	"encoding/xml.StartElement":               true, // stdlib passes it
+	"encoding/xml.SyntaxError":                true, // pointer-only methods
+	"encoding/xml.TagPathError":               true, // pointer-only methods
+	"encoding/xml.UnsupportedTypeError":       true, // pointer-only methods
+	"expvar.Float":                            true, // uncopyable
+	"expvar.Int":                              true, // uncopyable
+	"expvar.Map":                              true, // uncopyable
+	"expvar.String":                           true, // pointer-only methods
+	"flag.Flag":                               true, // stdlib passes it
+	"flag.FlagSet":                            true, // pointer-only methods
+	"go/ast.ArrayType":                        true, // pointer-only methods
+	"go/ast.AssignStmt":                       true, // pointer-only methods
+	"go/ast.BadDecl":                          true, // pointer-only methods
+	"go/ast.BadExpr":                          true, // pointer-only methods
+	"go/ast.BadStmt":                          true, // pointer-only methods
+	"go/ast.BasicLit":                         true, // pointer-only methods
+	"go/ast.BinaryExpr":                       true, // pointer-only methods
+	"go/ast.BlockStmt":                        true, // pointer-only methods
+	"go/ast.BranchStmt":                       true, // pointer-only methods
+	"go/ast.CallExpr":                         true, // pointer-only methods
+	"go/ast.CaseClause":                       true, // pointer-only methods
+	"go/ast.ChanType":                         true, // pointer-only methods
+	"go/ast.CommClause":                       true, // pointer-only methods
+	"go/ast.Comment":                          true, // pointer-only methods
+	"go/ast.CommentGroup":                     true, // pointer-only methods
+	"go/ast.CompositeLit":                     true, // pointer-only methods
+	"go/ast.DeclStmt":                         true, // pointer-only methods
+	"go/ast.DeferStmt":                        true, // pointer-only methods
+	"go/ast.Directive":                        true, // pointer-only methods
+	"go/ast.Ellipsis":                         true, // pointer-only methods
+	"go/ast.EmptyStmt":                        true, // pointer-only methods
+	"go/ast.ExprStmt":                         true, // pointer-only methods
+	"go/ast.Field":                            true, // pointer-only methods
+	"go/ast.FieldList":                        true, // pointer-only methods
+	"go/ast.File":                             true, // pointer-only methods
+	"go/ast.ForStmt":                          true, // pointer-only methods
+	"go/ast.FuncDecl":                         true, // pointer-only methods
+	"go/ast.FuncLit":                          true, // pointer-only methods
+	"go/ast.FuncType":                         true, // pointer-only methods
+	"go/ast.GenDecl":                          true, // pointer-only methods
+	"go/ast.GoStmt":                           true, // pointer-only methods
+	"go/ast.Ident":                            true, // pointer-only methods
+	"go/ast.IfStmt":                           true, // pointer-only methods
+	"go/ast.ImportSpec":                       true, // pointer-only methods
+	"go/ast.IncDecStmt":                       true, // pointer-only methods
+	"go/ast.IndexExpr":                        true, // pointer-only methods
+	"go/ast.IndexListExpr":                    true, // pointer-only methods
+	"go/ast.InterfaceType":                    true, // pointer-only methods
+	"go/ast.KeyValueExpr":                     true, // pointer-only methods
+	"go/ast.LabeledStmt":                      true, // pointer-only methods
+	"go/ast.MapType":                          true, // pointer-only methods
+	"go/ast.Object":                           true, // pointer-only methods
+	"go/ast.Package":                          true, // pointer-only methods
+	"go/ast.ParenExpr":                        true, // pointer-only methods
+	"go/ast.RangeStmt":                        true, // pointer-only methods
+	"go/ast.ReturnStmt":                       true, // pointer-only methods
+	"go/ast.Scope":                            true, // pointer-only methods
+	"go/ast.SelectStmt":                       true, // pointer-only methods
+	"go/ast.SelectorExpr":                     true, // pointer-only methods
+	"go/ast.SendStmt":                         true, // pointer-only methods
+	"go/ast.SliceExpr":                        true, // pointer-only methods
+	"go/ast.StarExpr":                         true, // pointer-only methods
+	"go/ast.StructType":                       true, // pointer-only methods
+	"go/ast.SwitchStmt":                       true, // pointer-only methods
+	"go/ast.TypeAssertExpr":                   true, // pointer-only methods
+	"go/ast.TypeSpec":                         true, // pointer-only methods
+	"go/ast.TypeSwitchStmt":                   true, // pointer-only methods
+	"go/ast.UnaryExpr":                        true, // pointer-only methods
+	"go/ast.ValueSpec":                        true, // pointer-only methods
+	"go/build.Context":                        true, // pointer-only methods
+	"go/build.MultiplePackageError":           true, // pointer-only methods
+	"go/build.NoGoError":                      true, // pointer-only methods
+	"go/build.Package":                        true, // pointer-only methods
+	"go/build/constraint.AndExpr":             true, // pointer-only methods
+	"go/build/constraint.NotExpr":             true, // pointer-only methods
+	"go/build/constraint.OrExpr":              true, // pointer-only methods
+	"go/build/constraint.SyntaxError":         true, // pointer-only methods
+	"go/build/constraint.TagExpr":             true, // pointer-only methods
+	"go/doc.Package":                          true, // pointer-only methods
+	"go/doc/comment.Doc":                      true, // stdlib passes it
+	"go/doc/comment.DocLink":                  true, // pointer-only methods
+	"go/doc/comment.Heading":                  true, // pointer-only methods
+	"go/doc/comment.List":                     true, // pointer-only methods
+	"go/doc/comment.Parser":                   true, // pointer-only methods
+	"go/doc/comment.Printer":                  true, // pointer-only methods
+	"go/printer.Config":                       true, // pointer-only methods
+	"go/scanner.Scanner":                      true, // pointer-only methods
+	"go/token.File":                           true, // uncopyable
+	"go/token.FileSet":                        true, // uncopyable
+	"go/types.Alias":                          true, // pointer-only methods
+	"go/types.ArgumentError":                  true, // pointer-only methods
+	"go/types.Array":                          true, // pointer-only methods
+	"go/types.Basic":                          true, // pointer-only methods
+	"go/types.Builtin":                        true, // pointer-only methods
+	"go/types.Chan":                           true, // pointer-only methods
+	"go/types.Checker":                        true, // pointer-only methods
+	"go/types.Config":                         true, // pointer-only methods
+	"go/types.Const":                          true, // pointer-only methods
+	"go/types.Context":                        true, // uncopyable
+	"go/types.Func":                           true, // pointer-only methods
+	"go/types.Info":                           true, // pointer-only methods
+	"go/types.Initializer":                    true, // pointer-only methods
+	"go/types.Interface":                      true, // pointer-only methods
+	"go/types.Label":                          true, // pointer-only methods
+	"go/types.Map":                            true, // pointer-only methods
+	"go/types.MethodSet":                      true, // pointer-only methods
+	"go/types.Named":                          true, // uncopyable
+	"go/types.Nil":                            true, // pointer-only methods
+	"go/types.Package":                        true, // pointer-only methods
+	"go/types.PkgName":                        true, // pointer-only methods
+	"go/types.Pointer":                        true, // pointer-only methods
+	"go/types.Scope":                          true, // pointer-only methods
+	"go/types.Selection":                      true, // pointer-only methods
+	"go/types.Signature":                      true, // pointer-only methods
+	"go/types.Slice":                          true, // pointer-only methods
+	"go/types.StdSizes":                       true, // pointer-only methods
+	"go/types.Struct":                         true, // pointer-only methods
+	"go/types.Term":                           true, // pointer-only methods
+	"go/types.Tuple":                          true, // pointer-only methods
+	"go/types.TypeList":                       true, // pointer-only methods
+	"go/types.TypeName":                       true, // pointer-only methods
+	"go/types.TypeParam":                      true, // pointer-only methods
+	"go/types.TypeParamList":                  true, // pointer-only methods
+	"go/types.Union":                          true, // pointer-only methods
+	"go/types.Var":                            true, // pointer-only methods
+	"hash/crc32.Table":                        true, // stdlib passes it
+	"hash/crc64.Table":                        true, // stdlib passes it
+	"hash/maphash.Hash":                       true, // pointer-only methods
+	"html/template.Error":                     true, // pointer-only methods
+	"html/template.Template":                  true, // pointer-only methods
+	"image.Alpha":                             true, // pointer-only methods
+	"image.Alpha16":                           true, // pointer-only methods
+	"image.CMYK":                              true, // pointer-only methods
+	"image.Gray":                              true, // pointer-only methods
+	"image.Gray16":                            true, // pointer-only methods
+	"image.NRGBA":                             true, // pointer-only methods
+	"image.NRGBA64":                           true, // pointer-only methods
+	"image.NYCbCrA":                           true, // pointer-only methods
+	"image.Paletted":                          true, // pointer-only methods
+	"image.RGBA":                              true, // pointer-only methods
+	"image.RGBA64":                            true, // pointer-only methods
+	"image.Uniform":                           true, // pointer-only methods
+	"image.YCbCr":                             true, // pointer-only methods
+	"image/gif.GIF":                           true, // stdlib passes it
+	"image/gif.Options":                       true, // stdlib passes it
+	"image/jpeg.Options":                      true, // stdlib passes it
+	"image/png.Encoder":                       true, // pointer-only methods
+	"index/suffixarray.Index":                 true, // pointer-only methods
+	"io.LimitedReader":                        true, // pointer-only methods
+	"io.OffsetWriter":                         true, // pointer-only methods
+	"io.PipeReader":                           true, // uncopyable
+	"io.PipeWriter":                           true, // uncopyable
+	"io.SectionReader":                        true, // pointer-only methods
+	"io/fs.PathError":                         true, // pointer-only methods
+	"log.Logger":                              true, // uncopyable
+	"log/slog.HandlerOptions":                 true, // stdlib passes it
+	"log/slog.JSONHandler":                    true, // pointer-only methods
+	"log/slog.LevelVar":                       true, // uncopyable
+	"log/slog.Logger":                         true, // pointer-only methods
+	"log/slog.MultiHandler":                   true, // pointer-only methods
+	"log/slog.TextHandler":                    true, // pointer-only methods
+	"log/syslog.Writer":                       true, // uncopyable
+	"math/big.Float":                          true, // pointer-only methods
+	"math/big.Int":                            true, // pointer-only methods
+	"math/big.Rat":                            true, // pointer-only methods
+	"math/rand.Rand":                          true, // pointer-only methods
+	"math/rand.Zipf":                          true, // pointer-only methods
+	"math/rand/v2.ChaCha8":                    true, // pointer-only methods
+	"math/rand/v2.PCG":                        true, // pointer-only methods
+	"math/rand/v2.Rand":                       true, // pointer-only methods
+	"math/rand/v2.Zipf":                       true, // pointer-only methods
+	"mime.WordDecoder":                        true, // pointer-only methods
+	"mime/multipart.FileHeader":               true, // pointer-only methods
+	"mime/multipart.Form":                     true, // pointer-only methods
+	"mime/multipart.Part":                     true, // pointer-only methods
+	"mime/multipart.Reader":                   true, // pointer-only methods
+	"mime/multipart.Writer":                   true, // pointer-only methods
+	"mime/quotedprintable.Reader":             true, // pointer-only methods
+	"mime/quotedprintable.Writer":             true, // pointer-only methods
+	"net.AddrError":                           true, // pointer-only methods
+	"net.Buffers":                             true, // pointer-only methods
+	"net.DNSConfigError":                      true, // pointer-only methods
+	"net.DNSError":                            true, // pointer-only methods
+	"net.Dialer":                              true, // pointer-only methods
+	"net.IPAddr":                              true, // pointer-only methods
+	"net.IPConn":                              true, // pointer-only methods
+	"net.IPNet":                               true, // pointer-only methods
+	"net.Interface":                           true, // pointer-only methods
+	"net.ListenConfig":                        true, // pointer-only methods
+	"net.OpError":                             true, // pointer-only methods
+	"net.ParseError":                          true, // pointer-only methods
+	"net.Resolver":                            true, // uncopyable
+	"net.TCPAddr":                             true, // pointer-only methods
+	"net.TCPConn":                             true, // pointer-only methods
+	"net.TCPListener":                         true, // pointer-only methods
+	"net.UDPAddr":                             true, // pointer-only methods
+	"net.UDPConn":                             true, // pointer-only methods
+	"net.UnixAddr":                            true, // pointer-only methods
+	"net.UnixConn":                            true, // pointer-only methods
+	"net.UnixListener":                        true, // uncopyable
+	"net/http.Client":                         true, // pointer-only methods
+	"net/http.ClientConn":                     true, // uncopyable
+	"net/http.Cookie":                         true, // pointer-only methods
+	"net/http.CrossOriginProtection":          true, // uncopyable
+	"net/http.MaxBytesError":                  true, // pointer-only methods
+	"net/http.ProtocolError":                  true, // pointer-only methods
+	"net/http.Request":                        true, // pointer-only methods
+	"net/http.Response":                       true, // pointer-only methods
+	"net/http.ResponseController":             true, // pointer-only methods
+	"net/http.ServeMux":                       true, // uncopyable
+	"net/http.Server":                         true, // uncopyable
+	"net/http.Transport":                      true, // uncopyable
+	"net/http/cgi.Handler":                    true, // pointer-only methods
+	"net/http/cookiejar.Jar":                  true, // uncopyable
+	"net/http/cookiejar.Options":              true, // stdlib passes it
+	"net/http/httptest.ResponseRecorder":      true, // pointer-only methods
+	"net/http/httptest.Server":                true, // uncopyable
+	"net/http/httptrace.ClientTrace":          true, // stdlib passes it
+	"net/http/httputil.ClientConn":            true, // uncopyable
+	"net/http/httputil.ProxyRequest":          true, // pointer-only methods
+	"net/http/httputil.ReverseProxy":          true, // pointer-only methods
+	"net/http/httputil.ServerConn":            true, // uncopyable
+	"net/mail.Address":                        true, // pointer-only methods
+	"net/mail.AddressParser":                  true, // pointer-only methods
+	"net/rpc.Client":                          true, // uncopyable
+	"net/rpc.Server":                          true, // uncopyable
+	"net/smtp.Client":                         true, // pointer-only methods
+	"net/textproto.Conn":                      true, // uncopyable
+	"net/textproto.Error":                     true, // pointer-only methods
+	"net/textproto.Pipeline":                  true, // uncopyable
+	"net/textproto.Reader":                    true, // pointer-only methods
+	"net/textproto.Writer":                    true, // pointer-only methods
+	"net/url.Error":                           true, // pointer-only methods
+	"net/url.URL":                             true, // pointer-only methods
+	"net/url.Userinfo":                        true, // pointer-only methods
+	"os.File":                                 true, // pointer-only methods
+	"os.LinkError":                            true, // pointer-only methods
+	"os.ProcAttr":                             true, // stdlib passes it
+	"os.Process":                              true, // uncopyable
+	"os.ProcessState":                         true, // pointer-only methods
+	"os.Root":                                 true, // pointer-only methods
+	"os.SyscallError":                         true, // pointer-only methods
+	"os/exec.Cmd":                             true, // pointer-only methods
+	"os/exec.Error":                           true, // pointer-only methods
+	"os/exec.ExitError":                       true, // pointer-only methods
+	"os/user.User":                            true, // pointer-only methods
+	"plugin.Plugin":                           true, // pointer-only methods
+	"reflect.MapIter":                         true, // pointer-only methods
+	"reflect.ValueError":                      true, // pointer-only methods
+	"regexp.Regexp":                           true, // pointer-only methods
+	"regexp/syntax.Error":                     true, // pointer-only methods
+	"regexp/syntax.Inst":                      true, // pointer-only methods
+	"regexp/syntax.Prog":                      true, // pointer-only methods
+	"regexp/syntax.Regexp":                    true, // pointer-only methods
+	"runtime.Frames":                          true, // pointer-only methods
+	"runtime.Func":                            true, // pointer-only methods
+	"runtime.MemProfileRecord":                true, // pointer-only methods
+	"runtime.MemStats":                        true, // stdlib passes it
+	"runtime.PanicNilError":                   true, // pointer-only methods
+	"runtime.Pinner":                          true, // pointer-only methods
+	"runtime.StackRecord":                     true, // pointer-only methods
+	"runtime.TypeAssertionError":              true, // pointer-only methods
+	"runtime/debug.BuildInfo":                 true, // pointer-only methods
+	"runtime/debug.GCStats":                   true, // stdlib passes it
+	"runtime/pprof.Profile":                   true, // uncopyable
+	"runtime/trace.FlightRecorder":            true, // uncopyable
+	"runtime/trace.Region":                    true, // pointer-only methods
+	"runtime/trace.Task":                      true, // pointer-only methods
+	"strconv.NumError":                        true, // pointer-only methods
+	"strings.Builder":                         true, // pointer-only methods
+	"strings.Reader":                          true, // pointer-only methods
+	"strings.Replacer":                        true, // uncopyable
+	"sync.Cond":                               true, // uncopyable
+	"sync.Map":                                true, // uncopyable
+	"sync.Mutex":                              true, // uncopyable
+	"sync.Once":                               true, // uncopyable
+	"sync.Pool":                               true, // uncopyable
+	"sync.RWMutex":                            true, // uncopyable
+	"sync.WaitGroup":                          true, // uncopyable
+	"sync/atomic.Bool":                        true, // uncopyable
+	"sync/atomic.Int32":                       true, // uncopyable
+	"sync/atomic.Int64":                       true, // uncopyable
+	"sync/atomic.Pointer":                     true, // uncopyable
+	"sync/atomic.Uint32":                      true, // uncopyable
+	"sync/atomic.Uint64":                      true, // uncopyable
+	"sync/atomic.Uintptr":                     true, // uncopyable
+	"sync/atomic.Value":                       true, // pointer-only methods
+	"syscall.Cmsghdr":                         true, // pointer-only methods
+	"syscall.FdSet":                           true, // stdlib passes it
+	"syscall.Flock_t":                         true, // stdlib passes it
+	"syscall.ICMPv6Filter":                    true, // stdlib passes it
+	"syscall.IPMreq":                          true, // stdlib passes it
+	"syscall.IPv6Mreq":                        true, // stdlib passes it
+	"syscall.Iovec":                           true, // pointer-only methods
+	"syscall.Kevent_t":                        true, // stdlib passes it
+	"syscall.Linger":                          true, // stdlib passes it
+	"syscall.Msghdr":                          true, // pointer-only methods
+	"syscall.ProcAttr":                        true, // stdlib passes it
+	"syscall.Rlimit":                          true, // stdlib passes it
+	"syscall.Rusage":                          true, // stdlib passes it
+	"syscall.SocketControlMessage":            true, // stdlib passes it
+	"syscall.Stat_t":                          true, // stdlib passes it
+	"syscall.Statfs_t":                        true, // stdlib passes it
+	"syscall.Timespec":                        true, // pointer-only methods
+	"syscall.Timeval":                         true, // pointer-only methods
+	"testing.B":                               true, // uncopyable
+	"testing.F":                               true, // uncopyable
+	"testing.M":                               true, // uncopyable
+	"testing.PB":                              true, // pointer-only methods
+	"testing.T":                               true, // uncopyable
+	"testing/quick.CheckEqualError":           true, // pointer-only methods
+	"testing/quick.CheckError":                true, // pointer-only methods
+	"testing/quick.Config":                    true, // stdlib passes it
+	"text/scanner.Scanner":                    true, // pointer-only methods
+	"text/tabwriter.Writer":                   true, // pointer-only methods
+	"text/template.Template":                  true, // pointer-only methods
+	"text/template/parse.ActionNode":          true, // pointer-only methods
+	"text/template/parse.BoolNode":            true, // pointer-only methods
+	"text/template/parse.BranchNode":          true, // pointer-only methods
+	"text/template/parse.BreakNode":           true, // pointer-only methods
+	"text/template/parse.ChainNode":           true, // pointer-only methods
+	"text/template/parse.CommandNode":         true, // pointer-only methods
+	"text/template/parse.CommentNode":         true, // pointer-only methods
+	"text/template/parse.ContinueNode":        true, // pointer-only methods
+	"text/template/parse.DotNode":             true, // pointer-only methods
+	"text/template/parse.FieldNode":           true, // pointer-only methods
+	"text/template/parse.IdentifierNode":      true, // pointer-only methods
+	"text/template/parse.IfNode":              true, // pointer-only methods
+	"text/template/parse.ListNode":            true, // pointer-only methods
+	"text/template/parse.NilNode":             true, // pointer-only methods
+	"text/template/parse.NumberNode":          true, // pointer-only methods
+	"text/template/parse.PipeNode":            true, // pointer-only methods
+	"text/template/parse.RangeNode":           true, // pointer-only methods
+	"text/template/parse.StringNode":          true, // pointer-only methods
+	"text/template/parse.TemplateNode":        true, // pointer-only methods
+	"text/template/parse.TextNode":            true, // pointer-only methods
+	"text/template/parse.Tree":                true, // pointer-only methods
+	"text/template/parse.VariableNode":        true, // pointer-only methods
+	"text/template/parse.WithNode":            true, // pointer-only methods
+	"time.Location":                           true, // pointer-only methods
+	"time.ParseError":                         true, // pointer-only methods
+	"time.Ticker":                             true, // pointer-only methods
+	"time.Timer":                              true, // pointer-only methods
+	"unicode.RangeTable":                      true, // stdlib passes it
 }
