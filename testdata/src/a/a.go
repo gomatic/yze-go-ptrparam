@@ -3,6 +3,7 @@ package a
 import (
 	"bytes"
 	"log/slog"
+	"os"
 	"strings"
 
 	cli "github.com/urfave/cli/v3"
@@ -36,6 +37,9 @@ func variadicPtr(xs ...*int) { _ = xs } // want `pointer parameter`
 
 // takesBuilder is allowed: strings.Builder is only usable by pointer.
 func takesBuilder(b *strings.Builder) { _ = b }
+
+// takesRoot is allowed: os.Root wraps a file descriptor, only usable by pointer.
+func takesRoot(r *os.Root) { _ = r }
 
 // takesCommand is allowed: the sanctioned CLI framework imposes *cli.Command
 // in every callback signature.

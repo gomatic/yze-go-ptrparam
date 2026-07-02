@@ -31,6 +31,7 @@ var allowedPointerParams = map[string]bool{
 	"testing.M":                        true,
 	"sync.WaitGroup":                   true,
 	"os.File":                          true,
+	"os.Root":                          true,
 	"net/http.Request":                 true,
 	"net/http.Response":                true,
 	"bytes.Buffer":                     true,
