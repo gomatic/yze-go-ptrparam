@@ -1,8 +1,6 @@
-# yze-go-ptrparam
+[![actions](https://github.com/gomatic/yze-go-ptrparam/actions/workflows/actions.yml/badge.svg)](https://github.com/gomatic/yze-go-ptrparam/actions/workflows/actions.yml)
+[![docs](https://github.com/gomatic/yze-go-ptrparam/actions/workflows/docs.yml/badge.svg)](https://github.com/gomatic/yze-go-ptrparam/actions/workflows/docs.yml)
+[![go](https://github.com/gomatic/yze-go-ptrparam/actions/workflows/go.yml/badge.svg)](https://github.com/gomatic/yze-go-ptrparam/actions/workflows/go.yml)
+[![release](https://github.com/gomatic/yze-go-ptrparam/actions/workflows/release.yml/badge.svg)](https://github.com/gomatic/yze-go-ptrparam/actions/workflows/release.yml)
 
-A [`yze`](https://github.com/gomatic/yze) analyzer (group `go`, category `immutability`) enforcing the gomatic Go immutability standard: function parameters are passed **by value**, never by pointer, unless the pointed-to type is a standard-library type where a pointer is the idiomatic calling convention (`*slog.Logger`, `*testing.T`, `*http.Request`, `*sql.DB`, …).
-
-- **Rule:** `yze/go/ptrparam`
-- **Binary:** `cmd/yze-go-ptrparam` runs it standalone (`text`/`-json`, and as a `go vet -vettool`).
-
-Built on the [`go-yze`](https://github.com/gomatic/go-yze) framework. The allow-list is baked in for v1; a configurable `-allow` flag is planned.
+[docs](https://gomatic.github.io/docs.yze-go-ptrparam/)
