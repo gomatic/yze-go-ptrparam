@@ -17,7 +17,15 @@ import (
 // forcing values onto it would be wrong code, not style. The signal is read
 // from the type's own package plus the analyzed package's direct imports
 // (constructors often live beside the type, not inside its package).
+//
+// A named type with basic underlying never gains the immunity — the same
+// exclusion discover.go's recordPointer applies to the generated allowlist:
+// an API taking *T there (flag.DurationVar's *time.Duration) is an
+// out-parameter binding to a value-idiomatic type, not a passing convention.
 func foreignConvention(pass *analysis.Pass, named *types.Named) bool {
+	if _, isBasic := named.Underlying().(*types.Basic); isBasic {
+		return false
+	}
 	pkg := named.Obj().Pkg()
 	if localToModule(pass, pkg) {
 		return false
