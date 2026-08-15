@@ -1,3 +1,0 @@
-.PHONY: discover
-discover: ## Regenerate allowlist_std.go from the current Go toolchain's stdlib
-	go run discover.go
