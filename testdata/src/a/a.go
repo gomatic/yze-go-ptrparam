@@ -239,3 +239,52 @@ func takesConfig(c *Config) { _ = c } // want `pointer parameter`
 type derivedPlain Plain
 
 func takesDerivedPlain(p *derivedPlain) { _ = p } // want `pointer parameter`
+
+// genDerived is the generic form of derivedBuilder: the same definition over
+// the same type, so the same layout and the same copy hazard. Keying the
+// definition map by the generic ORIGIN and looking it up by the INSTANCE
+// missed every instantiation, and the remedy prescribed for one panics.
+type genDerived[T any] strings.Builder
+
+func takesGenericDerived(b *genDerived[int]) { _ = b }
+
+// lockConstrained holds a field whose type parameter is constrained to a
+// lock. go vet's copylocks resolves the constraint and reports every copy of
+// this type; so must this, or the two prescribe opposite things about one
+// line. Allowed.
+type lockable interface{ sync.Mutex }
+
+type lockConstrained[T lockable] struct{ v T }
+
+func takesLockConstrained[T lockable](c *lockConstrained[T]) { _ = c }
+
+// eitherLock's constraint is a UNION of two lock types, so the walk has to
+// enter the terms rather than stop at the element. Allowed.
+type eitherLock interface {
+	sync.Mutex | sync.RWMutex
+}
+
+type unionConstrained[T eitherLock] struct{ v T }
+
+func takesUnionConstrained[T eitherLock](c *unionConstrained[T]) { _ = c }
+
+// countConstrained's constraint is a non-interface type, the shorthand form,
+// and int copies freely: flagged.
+type countConstrained[T int] struct{ v T }
+
+func takesCountConstrained[T int](c *countConstrained[T]) { _ = c } // want `pointer parameter`
+
+// anyConstrained's constraint admits everything and requires nothing: flagged.
+type anyConstrained[T any] struct{ v T }
+
+func takesAnyConstrained[T any](c *anyConstrained[T]) { _ = c } // want `pointer parameter`
+
+// mixedConstrained's constraint is a union of two copyable terms, so the walk
+// enters the terms and comes back out again: flagged.
+type copyableEither interface {
+	int | string
+}
+
+type mixedConstrained[T copyableEither] struct{ v T }
+
+func takesMixedConstrained[T copyableEither](c *mixedConstrained[T]) { _ = c } // want `pointer parameter`

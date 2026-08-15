@@ -51,12 +51,20 @@ func definedOver(pass *analysis.Pass, insp *inspector.Inspector) definitions {
 // The walk needs no cycle guard and carries none: Go rejects a definition
 // cycle outright — `type A B; type B A` is "invalid recursive type", verified
 // rather than assumed — so following definitions terminates.
+//
+// IT STOPS AT THE PACKAGE BOUNDARY, and that is a hole rather than a design.
+// definedOver reads the analyzed package's own TypeSpecs, because a pass has
+// the syntax of no other package, so the identical `type MyBuilder
+// strings.Builder` declared one package away is still reported and its
+// prescribed remedy still panics. The chain is keyed by the generic ORIGIN,
+// which is what a TypeSpec names, and looked up by it, so an instantiation of
+// a generic definition resolves like any other.
 func conventioned(d decision, t *types.Named) bool {
 	for t != nil {
 		if t.Obj().Pkg() != nil && conventionedHere(d, t) {
 			return true
 		}
-		t = d.over[t]
+		t = d.over[t.Origin()]
 	}
 	return false
 }

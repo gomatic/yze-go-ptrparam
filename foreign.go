@@ -31,9 +31,19 @@ import (
 // loader needed it, so a type reached through another package's alias
 // re-export arrives with its own package holding one name and nothing else;
 // scanning that scope answers "no convention" for a library whose convention
-// was merely not loaded, and one blank import of the unloaded package
-// completes the scope and turns the same finding silent. An unreadable
-// library is not a library with no pointer convention.
+// was merely not loaded. An unreadable library is not a library with no
+// pointer convention.
+//
+// THIS IS A DISABLEMENT CHANNEL, not merely a limitation, and it is recorded
+// as one rather than described as a virtue. An author who writes a two-line
+// alias package in their own module and names the type through it keeps the
+// type's own package out of the load, and the parameter goes silent — one
+// blank import of that package puts it back. Neither polarity is
+// import-independent, because blindness cannot tell "this library publishes no
+// pointer convention" from "this library was not loaded"; this one was chosen
+// because it costs a new package a reviewer can see rather than one invisible
+// import line. The repair is not a polarity: it is a loader that materialises
+// the package, which belongs to the framework.
 //
 // A named type with basic underlying never gains the immunity: an API taking
 // *T there (flag.DurationVar's *time.Duration) is an out-parameter binding to

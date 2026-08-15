@@ -73,7 +73,46 @@ func pointerOnlyMethods(named *types.Named) bool {
 // The shapes that CAN refer to themselves — a *T field, a []T field, a map
 // value — are not descended into, because copying them copies a reference.
 func uncopyable(t types.Type) bool {
+	if param, isParam := types.Unalias(t).(*types.TypeParam); isParam {
+		return constraintUncopyable(param)
+	}
 	return mustNotCopy(t) || componentUncopyable(t)
+}
+
+// constraintUncopyable applies the criterion to every type a type parameter's
+// constraint admits, which is what go vet's copylocks does through its own
+// type-parameter arm. Without it a generic struct holding a lock-constrained
+// field was reported and the prescribed value parameter drew
+// `passes lock by value: G[T] contains T contains sync.Mutex` from go vet —
+// two tools in one suite issuing contradictory instructions about one line.
+// A constraint's underlying is an interface in every form the language
+// admits, because go/types wraps a non-interface one implicitly — `[T int]`
+// arrives here as an interface holding `int` as its single element, which
+// TestConstraintUncopyableReadsEveryConstraintFormGoTypesProduces asserts — so
+// the assertion below carries no branch for a case that cannot occur.
+func constraintUncopyable(param *types.TypeParam) bool {
+	iface := param.Constraint().Underlying().(*types.Interface)
+	for i := range iface.NumEmbeddeds() {
+		if embeddedUncopyable(iface.EmbeddedType(i)) {
+			return true
+		}
+	}
+	return false
+}
+
+// embeddedUncopyable walks one constraint element: a union of terms, or a
+// single type standing for itself.
+func embeddedUncopyable(t types.Type) bool {
+	union, isUnion := t.(*types.Union)
+	if !isUnion {
+		return uncopyable(t)
+	}
+	for i := range union.Len() {
+		if uncopyable(union.Term(i).Type()) {
+			return true
+		}
+	}
+	return false
 }
 
 // componentUncopyable descends into struct fields and array elements.

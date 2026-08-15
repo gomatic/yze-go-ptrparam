@@ -125,3 +125,60 @@ func TestUncopyableAppliesVetsCopylocksCriterion(t *testing.T) {
 	assert.False(t, uncopyable(twice), "plain fields stay copyable however many of them there are")
 	assert.False(t, uncopyable(types.Typ[types.Int]), "basics are copyable")
 }
+
+// TestConstraintUncopyableReadsEveryConstraintFormGoTypesProduces names the
+// assertion constraintUncopyable rests on: a constraint's underlying is an
+// interface in every form the language admits, because go/types wraps a
+// non-interface one implicitly. The shorthand `[T int]` is the case that
+// looks like a counter-example and is not, and it is asserted here rather
+// than assumed, because the alternative to asserting it is a branch nothing
+// can reach and a coverage gate that says so.
+//
+// The rest is the reason the walk exists at all: go vet's copylocks resolves
+// a type parameter through its constraint, and a diagnostic that skipped that
+// step prescribed a value parameter which vet then rejected.
+func TestConstraintUncopyableReadsEveryConstraintFormGoTypesProduces(t *testing.T) {
+	t.Parallel()
+	pkg := checkedPkg(t, `package p
+
+import "sync"
+
+type Locked interface{ sync.Mutex }
+
+type Either interface {
+	sync.Mutex | sync.RWMutex
+}
+
+type Copyable interface {
+	int | string
+}
+
+func Locks[T Locked](v T) {}
+
+func Union[T Either](v T) {}
+
+func Copies[T Copyable](v T) {}
+
+func Counts[T int](v T) {}
+
+func Anything[T any](v T) {}
+`)
+
+	counts := typeParamOf(t, pkg, "Counts")
+	_, wrapped := counts.Constraint().Underlying().(*types.Interface)
+	assert.True(t, wrapped, "go/types wraps a non-interface constraint in an implicit interface")
+
+	assert.True(t, uncopyable(typeParamOf(t, pkg, "Locks")), "a lock-constrained parameter must not be copied")
+	assert.True(t, uncopyable(typeParamOf(t, pkg, "Union")), "the walk enters a union's terms")
+	assert.False(t, uncopyable(typeParamOf(t, pkg, "Copies")), "and comes back out when no term is a lock")
+	assert.False(t, uncopyable(counts), "the shorthand form is read like any other")
+	assert.False(t, uncopyable(typeParamOf(t, pkg, "Anything")), "an empty constraint requires nothing")
+}
+
+// typeParamOf returns the sole type parameter of the package-scope function.
+func typeParamOf(t *testing.T, pkg *types.Package, name string) *types.TypeParam {
+	t.Helper()
+	fn, isFunc := pkg.Scope().Lookup(name).(*types.Func)
+	require.True(t, isFunc, "no func %s in the fixture", name)
+	return fn.Type().(*types.Signature).TypeParams().At(0)
+}
