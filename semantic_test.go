@@ -1,17 +1,24 @@
 package ptrparam
 
 import (
+	"go/importer"
 	"go/token"
 	"go/types"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // mkNamed builds a named struct type in a throwaway package.
 func mkNamed(pkg *types.Package, name string, fields ...*types.Var) *types.Named {
 	st := types.NewStruct(fields, nil)
 	return types.NewNamed(types.NewTypeName(token.NoPos, pkg, name, nil), st, nil)
+}
+
+// mkNamedOver builds a named type over an arbitrary underlying type.
+func mkNamedOver(pkg *types.Package, name string, under types.Type) *types.Named {
+	return types.NewNamed(types.NewTypeName(token.NoPos, pkg, name, nil), under, nil)
 }
 
 // addMethod attaches a method with the given receiver pointer-ness and shape.
@@ -27,6 +34,28 @@ func addMethod(pkg *types.Package, n *types.Named, name string, onPointer, nulla
 	}
 	sig := types.NewSignatureType(recv, nil, nil, params, types.NewTuple(), false)
 	n.AddMethod(types.NewFunc(token.NoPos, pkg, name, sig))
+}
+
+// addLocker gives n the sync.Locker method pair on the chosen receiver.
+func addLocker(pkg *types.Package, n *types.Named, onPointer bool) {
+	addMethod(pkg, n, "Lock", onPointer, true)
+	addMethod(pkg, n, "Unlock", onPointer, true)
+}
+
+// TestLockerTypeIsSyncLocker pins the marker itself against the standard
+// library rather than against this file's idea of it. mustNotCopy's whole
+// claim is that this package and go vet's copylocks agree by construction, and
+// that claim is only worth anything if the interface built here IS sync.Locker
+// — a dropped method or a misspelt name would silently widen the exemption
+// back to the one-method marker this replaced.
+func TestLockerTypeIsSyncLocker(t *testing.T) {
+	t.Parallel()
+	sync, err := importer.Default().Import("sync")
+	require.NoError(t, err)
+	locker, ok := sync.Scope().Lookup("Locker").(*types.TypeName)
+	require.True(t, ok)
+	assert.True(t, types.Identical(lockerType, locker.Type().Underlying()),
+		"the marker must be sync.Locker exactly, not something shaped like it")
 }
 
 func TestPointerOnlyMethods(t *testing.T) {
@@ -50,44 +79,49 @@ func TestPointerOnlyMethods(t *testing.T) {
 	assert.True(t, pointerOnlyMethods(shy), "unexported methods are skipped")
 }
 
-func TestUncopyableAndLocks(t *testing.T) {
+// TestUncopyableAppliesVetsCopylocksCriterion holds uncopyable to the standard
+// semantic.go cites, in both directions. The criterion is sync.Locker on the
+// POINTER and not on the value, over a struct — not "some method called Lock",
+// which is strictly wider than go vet and is two lines to forge.
+func TestUncopyableAppliesVetsCopylocksCriterion(t *testing.T) {
 	pkg := types.NewPackage("x", "x")
 
-	lock := mkNamed(pkg, "Lockish")
-	addMethod(pkg, lock, "Lock", true, true)
-	assert.True(t, uncopyable(lock, map[types.Type]bool{}), "a pointer-receiver nullary Lock marks must-not-copy")
+	locker := mkNamed(pkg, "Locky")
+	addLocker(pkg, locker, true)
+	assert.True(t, uncopyable(locker), "*T is a sync.Locker and T is not: vet's must-not-copy marker")
 
-	falseLock := mkNamed(pkg, "FalseLock")
-	addMethod(pkg, falseLock, "Lock", true, false)
-	assert.False(t, uncopyable(falseLock, map[types.Type]bool{}), "Lock with parameters is not the copylocks marker")
+	oneMethod := mkNamed(pkg, "OneMethod")
+	addMethod(pkg, oneMethod, "Lock", true, true)
+	assert.False(t, uncopyable(oneMethod), "Lock alone is not sync.Locker, and go vet is silent about copying it")
 
-	holder := mkNamed(pkg, "Holder", types.NewVar(token.NoPos, pkg, "mu", lock))
-	assert.True(t, uncopyable(holder, map[types.Type]bool{}), "a lock field poisons the struct")
+	onValue := mkNamed(pkg, "OnValue")
+	addLocker(pkg, onValue, false)
+	assert.False(t, uncopyable(onValue), "a value that is itself a Locker copies as usable as the original")
 
-	viaPtr := mkNamed(pkg, "ViaPtr", types.NewVar(token.NoPos, pkg, "mu", types.NewPointer(lock)))
-	assert.False(t, uncopyable(viaPtr, map[types.Type]bool{}), "a lock behind a pointer copies safely")
+	withArgs := mkNamed(pkg, "WithArgs")
+	addMethod(pkg, withArgs, "Lock", true, false)
+	addMethod(pkg, withArgs, "Unlock", true, true)
+	assert.False(t, uncopyable(withArgs), "Lock with parameters is not the copylocks marker")
 
-	arr := mkNamed(pkg, "Arr", types.NewVar(token.NoPos, pkg, "cells", types.NewArray(lock, 2)))
-	assert.True(t, uncopyable(arr, map[types.Type]bool{}), "array elements are walked")
+	counter := mkNamedOver(pkg, "Counter", types.Typ[types.Int])
+	addLocker(pkg, counter, true)
+	assert.False(t, uncopyable(counter), "vet's copylocks looks only at structs; copying an int copies all of it")
 
-	plainVar := types.NewVar(token.NoPos, pkg, "a", types.Typ[types.Int])
+	holder := mkNamed(pkg, "Holder", types.NewVar(token.NoPos, pkg, "mu", locker))
+	assert.True(t, uncopyable(holder), "a lock field poisons the struct")
+
+	viaPtr := mkNamed(pkg, "ViaPtr", types.NewVar(token.NoPos, pkg, "mu", types.NewPointer(locker)))
+	assert.False(t, uncopyable(viaPtr), "a lock behind a pointer copies safely")
+
+	arr := mkNamed(pkg, "Arr", types.NewVar(token.NoPos, pkg, "cells", types.NewArray(locker, 2)))
+	assert.True(t, uncopyable(arr), "array elements are walked")
+
+	plain := types.NewVar(token.NoPos, pkg, "a", types.Typ[types.Int])
 	twice := mkNamed(
 		pkg, "Twice",
-		types.NewVar(token.NoPos, pkg, "a", plainVar.Type()),
-		types.NewVar(token.NoPos, pkg, "b", plainVar.Type()),
+		types.NewVar(token.NoPos, pkg, "a", plain.Type()),
+		types.NewVar(token.NoPos, pkg, "b", plain.Type()),
 	)
-	assert.False(t, uncopyable(twice, map[types.Type]bool{}), "plain fields, incl. the seen-set revisit, stay copyable")
-	assert.False(t, uncopyable(types.Typ[types.Int], map[types.Type]bool{}), "basics are copyable")
-}
-
-func TestIsNullary(t *testing.T) {
-	pkg := types.NewPackage("x", "x")
-	nullary := types.NewFunc(token.NoPos, pkg, "f",
-		types.NewSignatureType(nil, nil, nil, types.NewTuple(), types.NewTuple(), false))
-	assert.True(t, isNullary(nullary))
-	assert.False(
-		t,
-		isNullary(types.NewVar(token.NoPos, pkg, "v", types.Typ[types.Int])),
-		"a non-func object is not nullary",
-	)
+	assert.False(t, uncopyable(twice), "plain fields stay copyable however many of them there are")
+	assert.False(t, uncopyable(types.Typ[types.Int]), "basics are copyable")
 }

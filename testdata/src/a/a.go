@@ -131,3 +131,83 @@ func takesAliasedLogger(l LoggerPtr) { _ = l }
 
 // variadicAlias is flagged: the alias is unwrapped through the ellipsis too.
 func variadicAlias(ps ...PlainPtr) { _ = ps } // want `pointer parameter`
+
+// valueLock declares a nullary Lock on the VALUE receiver, so *valueLock's
+// method set holds it. That is the one-method marker, and it is not the one
+// go vet's copylocks uses: vet is silent about copying this type, so the
+// pointer is not required and the parameter is flagged.
+type valueLock struct{ n int }
+
+func (valueLock) Lock() {}
+
+func takesValueLock(v *valueLock) { _ = v } // want `pointer parameter`
+
+// forged holds the one-method marker as a blank field. If the marker counted,
+// two lines written once would silence every struct holding it at any depth.
+type forged struct {
+	_ valueLock
+	n int
+}
+
+func takesForged(f *forged) { _ = f } // want `pointer parameter`
+
+// nestForged holds forged one level further up.
+type nestForged struct{ f forged }
+
+func takesNestForged(n *nestForged) { _ = n } // want `pointer parameter`
+
+// valueLocker's VALUE is a sync.Locker in its own right, so a copy is as
+// usable as the original — the clause vet's copylocks states as "a pointer to
+// this type is a sync.Locker, but a value is not". Flagged.
+type valueLocker struct{ n int }
+
+func (valueLocker) Lock() {}
+
+func (valueLocker) Unlock() {}
+
+func takesValueLocker(v *valueLocker) { _ = v } // want `pointer parameter`
+
+// counterLock is a sync.Locker by pointer but is NOT a struct, and copying it
+// copies everything it is. vet's copylocks looks only at structs; so does
+// this. Value() keeps the pointer-only-methods exemption out of the decision.
+type counterLock int
+
+func (c *counterLock) Lock() {}
+
+func (c *counterLock) Unlock() {}
+
+func (c counterLock) Value() int { return int(c) }
+
+func takesCounterLock(c *counterLock) { _ = c } // want `pointer parameter`
+
+// door is must-not-copy under vet's own marker: *door is a sync.Locker and
+// door is not. Allowed.
+type door struct{ n int }
+
+func (d *door) Lock() {}
+
+func (d *door) Unlock() {}
+
+// holdsDoor has no methods of its own, so only the copylocks criterion can
+// exempt it: the walk reaches the field exactly as vet's does.
+type holdsDoor struct {
+	d door
+	n int
+}
+
+func takesHoldsDoor(h *holdsDoor) { _ = h }
+
+// mutexLike carries the marker in its own method set and has a value-receiver
+// method besides, so pointer-only-methods cannot answer for it and the
+// copylocks criterion must. It has to: go vet reports every copy of this type,
+// so reporting the pointer parameter would prescribe a remedy the standard
+// toolchain rejects.
+type mutexLike struct{ n int }
+
+func (m *mutexLike) Lock() {}
+
+func (m *mutexLike) Unlock() {}
+
+func (m mutexLike) N() int { return m.n }
+
+func takesMutexLike(m *mutexLike) { _ = m }
