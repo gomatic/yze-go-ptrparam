@@ -14,14 +14,30 @@ import (
 // code's design responsibility, but a foreign type follows its library's
 // design — when the library's exported API hands out or accepts *T (a parser
 // returning *ast.Document whose nodes are aliased and mutated in place),
-// forcing values onto it would be wrong code, not style. The signal is read
-// from the type's own package plus the analyzed package's direct imports
-// (constructors often live beside the type, not inside its package).
+// forcing values onto it would be wrong code, not style.
 //
-// A named type with basic underlying never gains the immunity — the same
-// exclusion discover.go's recordPointer applies to the generated allowlist:
-// an API taking *T there (flag.DurationVar's *time.Duration) is an
-// out-parameter binding to a value-idiomatic type, not a passing convention.
+// The signal is read from the type's OWN package and from nowhere else. It
+// used to be read from the analyzed package's direct imports as well, on the
+// reasoning that constructors often live beside the type rather than inside
+// its package, and that made the verdict a function of the analyzed file's
+// import list: adding `_ "weaver"` to a file, one line that changes nothing
+// else and reads as ordinary housekeeping, turned a reported parameter silent,
+// and deleting an import a refactor no longer needed turned a green file red
+// for a reason nothing in the diff explained. A decision about a type must
+// read something the judging file cannot rewrite.
+//
+// Where the loader did not materialise the library, the analyzer renders no
+// verdict on it. go/types populates a package's scope only as far as the
+// loader needed it, so a type reached through another package's alias
+// re-export arrives with its own package holding one name and nothing else;
+// scanning that scope answers "no convention" for a library whose convention
+// was merely not loaded, and one blank import of the unloaded package
+// completes the scope and turns the same finding silent. An unreadable
+// library is not a library with no pointer convention.
+//
+// A named type with basic underlying never gains the immunity: an API taking
+// *T there (flag.DurationVar's *time.Duration) is an out-parameter binding to
+// a value-idiomatic type, not a passing convention.
 func foreignConvention(pass *analysis.Pass, named *types.Named) bool {
 	if _, isBasic := named.Underlying().(*types.Basic); isBasic {
 		return false
@@ -30,15 +46,10 @@ func foreignConvention(pass *analysis.Pass, named *types.Named) bool {
 	if localToModule(pass, pkg) {
 		return false
 	}
-	if apiUsesPointer(pkg, named) {
+	if !pkg.Complete() {
 		return true
 	}
-	for _, imp := range pass.Pkg.Imports() {
-		if apiUsesPointer(imp, named) {
-			return true
-		}
-	}
-	return false
+	return apiUsesPointer(pkg, named)
 }
 
 // localToModule reports whether pkg belongs to the analyzed module. Without
@@ -57,6 +68,9 @@ func localToModule(pass *analysis.Pass, pkg *types.Package) bool {
 // apiUsesPointer reports whether pkg's exported API mentions *named in a
 // parameter, result, method, or exported struct field (directly, or one
 // container level deep — []*T, map[...]*T).
+//
+// It is reached only for a complete pkg; foreignConvention holds that line
+// and says why.
 func apiUsesPointer(pkg *types.Package, named *types.Named) bool {
 	scope := pkg.Scope()
 	for _, name := range scope.Names() {

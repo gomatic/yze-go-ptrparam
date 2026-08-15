@@ -85,6 +85,34 @@ type Buffer struct{ b []byte }
 		"a structured type reaches the rest of the decision rather than being excluded outright")
 }
 
+// TestForeignConventionDeclinesToJudgeAnUnmaterialisedPackage names the
+// scope limitation foreignConvention rests on. go/types populates a package's
+// scope only as far as the loader needed it, so a foreign type reached
+// through another package's alias re-export arrives with its own package
+// holding one name and nothing else. Scanning that scope reports "no
+// convention" for a library whose convention was merely not loaded — and one
+// blank import of the unloaded package completes the scope and turns the same
+// finding silent, which is a verdict that follows the import list rather than
+// the code. Where the analyzer cannot read the library, it renders no verdict.
+func TestForeignConventionDeclinesToJudgeAnUnmaterialisedPackage(t *testing.T) {
+	t.Parallel()
+	analysed := types.NewPackage("example.test/mod/pkg", "pkg")
+	analysed.MarkComplete()
+
+	unloaded := types.NewPackage("example.test/lib", "lib")
+	hidden := types.NewNamed(types.NewTypeName(token.NoPos, unloaded, "Node", nil), types.NewStruct(nil, nil), nil)
+	require.False(t, unloaded.Complete(), "the loader materialised nothing but the name")
+	assert.True(t, foreignConvention(&analysis.Pass{Pkg: analysed}, hidden),
+		"a library the loader never materialised is not a library with no pointer convention")
+
+	loaded := types.NewPackage("example.test/lib2", "lib2")
+	seen := types.NewNamed(types.NewTypeName(token.NoPos, loaded, "Options", nil), types.NewStruct(nil, nil), nil)
+	loaded.Scope().Insert(seen.Obj())
+	loaded.MarkComplete()
+	assert.False(t, foreignConvention(&analysis.Pass{Pkg: analysed}, seen),
+		"a library that WAS materialised and hands out no pointer establishes no convention")
+}
+
 // TestMentionsPointerNeverFollowsTheGenericOrigin names mentionsPointer's
 // invariant: a library that hands out one instantiation of a generic type
 // establishes the convention for THAT instantiation and for no other.
