@@ -92,11 +92,11 @@ var Registration = goyze.Registration{
 
 // run reports each disallowed pointer parameter.
 func run(pass *analysis.Pass) (any, error) {
-	allow := buildAllow(allowCSV(allowExtra))
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	d := decision{pass: pass, allow: buildAllow(allowCSV(allowExtra)), over: definedOver(pass, insp)}
 	insp.Preorder([]ast.Node{(*ast.FuncType)(nil)}, func(n ast.Node) {
 		for _, field := range n.(*ast.FuncType).Params.List {
-			check(pass, allow, field)
+			check(d, field)
 		}
 	})
 	return nil, nil
@@ -131,13 +131,13 @@ func splitNonEmpty(value allowCSV) []string {
 }
 
 // check reports a parameter whose type is a non-idiomatic pointer.
-func check(pass *analysis.Pass, allow map[string]bool, field *ast.Field) {
+func check(d decision, field *ast.Field) {
 	expr := paramType(field)
-	ptr, ok := pointerType(pass.TypesInfo.TypeOf(expr))
-	if !ok || allowedPointer(allow, pass, ptr.Elem()) {
+	ptr, ok := pointerType(d.pass.TypesInfo.TypeOf(expr))
+	if !ok || allowedPointer(d, ptr.Elem()) {
 		return
 	}
-	pass.Reportf(
+	d.pass.Reportf(
 		expr.Pos(),
 		"pointer parameter; pass by value unless a pointer is the type's idiomatic calling convention",
 	)
@@ -176,15 +176,12 @@ func paramType(field *ast.Field) ast.Expr {
 // type parameter is a generic seam — the function cannot know its
 // instantiations, and the pointer is how a generic function binds to a
 // caller-owned value (e.g. a flag destination) — so it is never reported.
-func allowedPointer(allow map[string]bool, pass *analysis.Pass, elem types.Type) bool {
+func allowedPointer(d decision, elem types.Type) bool {
 	switch t := types.Unalias(elem).(type) {
 	case *types.TypeParam:
 		return true
 	case *types.Named:
-		if t.Obj().Pkg() == nil {
-			return false
-		}
-		return allow[t.Obj().Pkg().Path()+"."+t.Obj().Name()] || pointerIdiomatic(t) || foreignConvention(pass, t)
+		return conventioned(d, t)
 	default:
 		return false
 	}

@@ -211,3 +211,22 @@ func (m *mutexLike) Unlock() {}
 func (m mutexLike) N() int { return m.n }
 
 func takesMutexLike(m *mutexLike) { _ = m }
+
+// derivedBuilder is DEFINED over a type whose pointer is its convention. It
+// inherits none of strings.Builder's methods and all of its layout, so it
+// carries the same copy hazard while announcing none of it. Allowed, because
+// the prescribed remedy on this type does not merely cost — it panics.
+type derivedBuilder strings.Builder
+
+func takesDerivedBuilder(b *derivedBuilder) { _ = b }
+
+// derivedTwice is one more definition further along the same chain.
+type derivedTwice derivedBuilder
+
+func takesDerivedTwice(b *derivedTwice) { _ = b }
+
+// derivedPlain is defined over a copyable type, so it stays flagged: the walk
+// follows the definition, it does not exempt every definition.
+type derivedPlain Plain
+
+func takesDerivedPlain(p *derivedPlain) { _ = p } // want `pointer parameter`
