@@ -29,3 +29,20 @@ func takesRow(r *lib.Row) { _ = r }
 
 // takesWidget is allowed: lib.Factory.New returns *Widget.
 func takesWidget(w *lib.Widget) { _ = w }
+
+// takesIntBox is allowed: lib.MakeIntBox hands out *Box[int].
+func takesIntBox(b *lib.Box[int]) { _ = b }
+
+// takesStringBox is flagged: the exemption follows what the library actually
+// hands out, and nothing in lib produces or accepts *Box[string]. Following
+// the generic's NAME instead would exempt every instantiation of any generic
+// the library mentions once.
+func takesStringBox(b *lib.Box[string]) { _ = b } // want `pointer parameter`
+
+// takesCursor is allowed: lib.Open hands out Handle, the library's own
+// defined-pointer spelling for *Cursor. The convention scan reads the type,
+// not the spelling, exactly as the parameter side does.
+func takesCursor(c *lib.Cursor) { _ = c }
+
+// takesHandle is allowed: the same pointer, spelled as the library spells it.
+func takesHandle(h lib.Handle) { _ = h }

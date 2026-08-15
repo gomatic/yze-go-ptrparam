@@ -50,6 +50,22 @@ var Default *Options
 // Str is an alias TypeName whose type is not named.
 type Str = string
 
+// Box is generic. The library hands out exactly ONE instantiation, so that is
+// the only instantiation whose pointer is its convention.
+type Box[T any] struct{ V T }
+
+// MakeIntBox is the sole convention source for Box.
+func MakeIntBox() *Box[int] { return &Box[int]{} }
+
+// Cursor is handed out through a DEFINED pointer type rather than a star.
+type Cursor struct{ c int }
+
+// Handle is the library's own spelling for *Cursor.
+type Handle *Cursor
+
+// Open hands out the pointer under the library's spelling.
+func Open() Handle { return nil }
+
 // Widget is conventioned through a concrete type's method result.
 type Widget struct{ w int }
 

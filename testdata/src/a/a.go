@@ -104,3 +104,30 @@ func takesArrayGuard(a *arrayGuard) { _ = a }
 type ptrField struct{ mu *sync.Mutex }
 
 func takesPtrField(p *ptrField) { _ = p } // want `pointer parameter`
+
+// PlainPtr aliases a pointer. An alias is IDENTICAL to *Plain in Go — same
+// method set, same assignability, same nil — so the parameter is a pointer
+// parameter however it is spelled, and the rule decides on the type.
+type PlainPtr = *Plain
+
+func takesAliasedPointer(p PlainPtr) { _ = p } // want `pointer parameter`
+
+// namedPtr is a defined type whose underlying is a pointer. The spelling is
+// this module's own, so the pointed-to type decides exactly as *Plain does.
+type namedPtr *Plain
+
+func takesNamedPointer(p namedPtr) { _ = p } // want `pointer parameter`
+
+// PtrTo is a generic alias; an instantiation names a known pointer type.
+type PtrTo[T any] = *T
+
+func takesGenericAliasPointer(p PtrTo[Plain]) { _ = p } // want `pointer parameter`
+
+// LoggerPtr aliases a pointer to a pointer-idiomatic standard-library type:
+// the exemptions apply to the aliased spelling exactly as to the star.
+type LoggerPtr = *slog.Logger
+
+func takesAliasedLogger(l LoggerPtr) { _ = l }
+
+// variadicAlias is flagged: the alias is unwrapped through the ellipsis too.
+func variadicAlias(ps ...PlainPtr) { _ = ps } // want `pointer parameter`

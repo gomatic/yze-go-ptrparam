@@ -150,13 +150,17 @@ func tupleMentionsPointer(tuple *types.Tuple, named *types.Named) bool {
 	return false
 }
 
-// mentionsPointer reports whether t is *named, or a slice/array/map holding
-// *named one level deep.
+// mentionsPointer reports whether t is a pointer to named — however the
+// library spells that pointer — or a slice/array/map holding one, one level
+// deep. The type is compared with types.Identical rather than by generic
+// ORIGIN: a library that hands out one instantiation of a generic type has
+// established the convention for that instantiation and for no other, and
+// keying on the origin exempts every instantiation the library never mentions.
 func mentionsPointer(t types.Type, named *types.Named) bool {
-	switch u := t.(type) {
-	case *types.Pointer:
-		elem, ok := types.Unalias(u.Elem()).(*types.Named)
-		return ok && elem.Origin() == named.Origin()
+	if ptr, ok := pointerType(t); ok {
+		return types.Identical(types.Unalias(ptr.Elem()), named)
+	}
+	switch u := types.Unalias(t).(type) {
 	case *types.Slice:
 		return mentionsPointer(u.Elem(), named)
 	case *types.Array:

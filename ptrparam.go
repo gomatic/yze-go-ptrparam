@@ -102,14 +102,33 @@ func splitNonEmpty(value allowCSV) []string {
 
 // check reports a parameter whose type is a non-idiomatic pointer.
 func check(pass *analysis.Pass, allow map[string]bool, field *ast.Field) {
-	star, ok := paramType(field).(*ast.StarExpr)
-	if !ok || allowedPointer(allow, pass, star.X) {
+	expr := paramType(field)
+	ptr, ok := pointerType(pass.TypesInfo.TypeOf(expr))
+	if !ok || allowedPointer(allow, pass, ptr.Elem()) {
 		return
 	}
 	pass.Reportf(
-		star.Pos(),
+		expr.Pos(),
 		"pointer parameter; pass by value unless a pointer is the type's idiomatic calling convention",
 	)
+}
+
+// pointerType unwraps a type expression's TYPE to the pointer it denotes,
+// seeing through an alias (identical to the pointer in every way Go
+// recognises) and through a defined type whose underlying is a pointer. The
+// rule is about what a parameter IS, not how it is spelled: matching the
+// `*T` syntax alone lets one `type` line take a parameter out of the rule
+// without changing a single call site.
+func pointerType(t types.Type) (*types.Pointer, bool) {
+	switch u := types.Unalias(t).(type) {
+	case *types.Pointer:
+		return u, true
+	case *types.Named:
+		ptr, ok := u.Underlying().(*types.Pointer)
+		return ptr, ok
+	default:
+		return nil, false
+	}
 }
 
 // paramType returns the type expression to inspect for a parameter field,
@@ -122,13 +141,13 @@ func paramType(field *ast.Field) ast.Expr {
 	return field.Type
 }
 
-// allowedPointer reports whether the pointed-to type expression names an
-// allow-listed type, a type parameter, or a semantically pointer-idiomatic
-// type. A pointer to a type parameter is a generic seam — the function cannot
-// know its instantiations, and the pointer is how a generic function binds to
-// a caller-owned value (e.g. a flag destination) — so it is never reported.
-func allowedPointer(allow map[string]bool, pass *analysis.Pass, x ast.Expr) bool {
-	switch t := types.Unalias(pass.TypesInfo.TypeOf(x)).(type) {
+// allowedPointer reports whether the pointed-to type is an allow-listed type,
+// a type parameter, or a semantically pointer-idiomatic type. A pointer to a
+// type parameter is a generic seam — the function cannot know its
+// instantiations, and the pointer is how a generic function binds to a
+// caller-owned value (e.g. a flag destination) — so it is never reported.
+func allowedPointer(allow map[string]bool, pass *analysis.Pass, elem types.Type) bool {
+	switch t := types.Unalias(elem).(type) {
 	case *types.TypeParam:
 		return true
 	case *types.Named:
