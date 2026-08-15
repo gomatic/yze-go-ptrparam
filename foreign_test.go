@@ -58,9 +58,8 @@ func TestObjectUsesPointerIgnoresNonAPIObjects(t *testing.T) {
 // Granting immunity there would exempt every *time.Duration parameter in the
 // fleet from the rule.
 //
-// The exclusion mirrors recordPointer's in discover.go, so the generated
-// allowlist and this runtime check agree; if they diverged, a type would be
-// immune under one and reported under the other depending on which path ran.
+// The exclusion is the only thing standing between the rule and every
+// *time.Duration, *int64 and *MyEnum parameter in the fleet.
 func TestForeignConventionNeverImmunisesABasicUnderlyingType(t *testing.T) {
 	t.Parallel()
 	pkg := checkedPkg(t, `package p

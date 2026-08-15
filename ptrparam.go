@@ -1,12 +1,49 @@
 // Package ptrparam provides a go/analysis analyzer enforcing the gomatic Go
 // immutability standard: function parameters are passed by value, never by
 // pointer, unless a pointer is the pointed-to type's idiomatic calling
-// convention — a standard-library type conventionally passed by pointer (the
-// generated allowlist_std.go, discovered from the toolchain by discover.go:
-// uncopyable types, pointer-only method sets, and types the stdlib's own API
-// passes as *T), the sanctioned CLI framework's *cli.Command (urfave/cli/v3
-// imposes it in every Action/Before/After signature), or a type parameter (a
-// generic seam whose instantiations the analyzer cannot judge).
+// convention.
+//
+// A parameter is judged on its TYPE, not on its spelling: `*T`, an alias of
+// `*T`, a defined type whose underlying is `*T`, and an instantiated generic
+// alias are one rule, because they are one type and no call site can tell
+// them apart.
+//
+// There are four exemptions and no others.
+//
+//   - Pointer-idiomatic, decided from the type itself and applying to any
+//     package including the analyzed module's own (semantic.go): the type is
+//     uncopyable under go vet's copylocks criterion — a struct whose POINTER
+//     is a sync.Locker while its value is not, directly or through a struct
+//     field or array element — or every exported method it declares takes the
+//     pointer receiver, so a value carries no usable API. The second is
+//     forgeable by design and its forgery is charged by yze/ptrrecv; the first
+//     costs the marker go vet then reports every copy of the type against.
+//
+//   - Foreign convention (foreign.go): a type from OUTSIDE the analyzed module
+//     whose own package's exported API hands out or accepts a pointer to it —
+//     in a function or method signature, an interface method, an exported
+//     struct field, or a callback field, directly or one container level deep.
+//     The analyzed module's own types are its own design responsibility and
+//     never gain it, and neither does a named type over a basic underlying,
+//     where `*T` is an out-parameter (flag.DurationVar's *time.Duration)
+//     rather than a passing convention.
+//
+//   - A type parameter: a generic seam whose instantiations the analyzer
+//     cannot judge, and the pointer is how a generic function binds to a
+//     caller-owned value.
+//
+//   - The -allow flag (`analyzers: {ptrparam: {allow: [...]}}` under stickler),
+//     a comma-separated list of fully-qualified `pkgpath.Name` types. This is
+//     a SILENT disablement channel: a configured entry produces no output, no
+//     count and no ratchet, and a misspelt entry is accepted without complaint
+//     and is simply dead. It is named here because an exemption nobody can
+//     enumerate is one nobody reviews.
+//
+// One scope limitation, which is not an exemption: where go/types did not
+// materialise a foreign type's own package — it reached the type through
+// another package's alias re-export and loaded nothing else — the analyzer
+// renders no verdict on it, because the alternative is a verdict that follows
+// the analyzed file's import list rather than its code.
 package ptrparam
 
 import (
@@ -20,20 +57,12 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// allowedPointerParams are the non-standard-library types conventionally
-// passed by pointer: the sanctioned CLI framework's command type, whose
-// pointer-taking callback signatures (Action/Before/After/ExitErrHandler)
-// urfave/cli/v3 itself imposes on every conforming CLI. Standard-library
-// types come from the generated stdPointerParams (allowlist_std.go).
-var allowedPointerParams = map[string]bool{
-	"github.com/urfave/cli/v3.Command": true,
-}
-
 // allowExtra is the configurable allow-list of additional fully-qualified
 // pointer-parameter types (pkgpath.Name), set via the -allow flag or config.
 var allowExtra string
 
-// Analyzer reports pointer parameters that are not idiomatic standard-library types.
+// Analyzer reports pointer parameters whose pointed-to type has no pointer
+// calling convention.
 var Analyzer = newAnalyzer()
 
 func newAnalyzer() *analysis.Analyzer {
@@ -57,7 +86,7 @@ func newAnalyzer() *analysis.Analyzer {
 var Registration = goyze.Registration{
 	Name:       "ptrparam",
 	Categories: []goyze.Category{"immutability"},
-	URL:        "https://docs.gomatic.dev/yze/go/ptrparam",
+	URL:        "https://docs.gomatic.dev/yze/ptrparam",
 	Analyzer:   Analyzer,
 }
 
@@ -77,16 +106,17 @@ func run(pass *analysis.Pass) (any, error) {
 // fully-qualified pointer-parameter types.
 type allowCSV string
 
-// buildAllow merges the generated standard-library allowlist and the baked-in
-// framework types with the configured extras.
+// buildAllow is the configured extras, which are the whole allow-list.
+//
+// It used to merge two hard-coded maps as well: a generated 474-entry
+// standard-library table and one entry for urfave/cli/v3's *cli.Command.
+// Neither of them decided a verdict, on every input that was measured against
+// binaries built with each map deleted — the measurement is in the commit that
+// removed them. Both are answered by pointerIdiomatic and foreignConvention,
+// which compute the same criteria from the types themselves rather than from a
+// table that needs regenerating each time the toolchain moves.
 func buildAllow(extra allowCSV) map[string]bool {
-	allow := make(map[string]bool, len(stdPointerParams)+len(allowedPointerParams))
-	for name := range stdPointerParams {
-		allow[name] = true
-	}
-	for name := range allowedPointerParams {
-		allow[name] = true
-	}
+	allow := make(map[string]bool)
 	for _, name := range splitNonEmpty(extra) {
 		allow[name] = true
 	}

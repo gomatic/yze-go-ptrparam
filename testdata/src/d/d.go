@@ -1,9 +1,9 @@
 // Package d imports a stdlib package (flag) whose exported API takes a
 // pointer to a basic-underlying named type (flag.DurationVar's
 // *time.Duration). That is an out-parameter binding to a value-idiomatic
-// type, not a passing convention — exactly the exclusion discover.go's
-// recordPointer applies to the generated allowlist — so the import must not
-// grant foreign-convention immunity to *time.Duration parameters here.
+// type, not a passing convention — the basic-underlying exclusion
+// foreignConvention applies — so naming flag must not grant
+// foreign-convention immunity to *time.Duration parameters here.
 package d
 
 import (
