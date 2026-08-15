@@ -49,17 +49,12 @@ package ptrparam
 import (
 	"go/ast"
 	"go/types"
-	"strings"
 
 	goyze "github.com/gomatic/go-yze"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
-
-// allowExtra is the configurable allow-list of additional fully-qualified
-// pointer-parameter types (pkgpath.Name), set via the -allow flag or config.
-var allowExtra string
 
 // Analyzer reports pointer parameters whose pointed-to type has no pointer
 // calling convention.
@@ -100,34 +95,6 @@ func run(pass *analysis.Pass) (any, error) {
 		}
 	})
 	return nil, nil
-}
-
-// allowCSV is the raw comma-separated -allow flag value listing extra
-// fully-qualified pointer-parameter types.
-type allowCSV string
-
-// buildAllow is the configured extras, which are the whole allow-list.
-//
-// It used to merge two hard-coded maps as well: a generated 474-entry
-// standard-library table and one entry for urfave/cli/v3's *cli.Command.
-// Neither of them decided a verdict, on every input that was measured against
-// binaries built with each map deleted — the measurement is in the commit that
-// removed them. Both are answered by pointerIdiomatic and foreignConvention,
-// which compute the same criteria from the types themselves rather than from a
-// table that needs regenerating each time the toolchain moves.
-func buildAllow(extra allowCSV) map[string]bool {
-	allow := make(map[string]bool)
-	for _, name := range splitNonEmpty(extra) {
-		allow[name] = true
-	}
-	return allow
-}
-
-func splitNonEmpty(value allowCSV) []string {
-	if value == "" {
-		return nil
-	}
-	return strings.Split(string(value), ",")
 }
 
 // check reports a parameter whose type is a non-idiomatic pointer.

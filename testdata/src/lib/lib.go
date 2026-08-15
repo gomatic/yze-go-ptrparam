@@ -73,6 +73,13 @@ type Hook struct{ h int }
 // OnHook is the callback shape; the framework, not the consumer, chose it.
 type OnHook func(h *Hook) error
 
+// Hidden is mentioned by this package, but only from an UNEXPORTED field,
+// which is not API: nothing a consumer can see hands out *Hidden.
+type Hidden struct{ h int }
+
+// Vault carries *Hidden where no consumer can reach it.
+type Vault struct{ secret *Hidden }
+
 // Widget is conventioned through a concrete type's method result.
 type Widget struct{ w int }
 

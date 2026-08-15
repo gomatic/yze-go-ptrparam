@@ -225,6 +225,15 @@ type derivedTwice derivedBuilder
 
 func takesDerivedTwice(b *derivedTwice) { _ = b }
 
+// Config is named for the shape a name-keyed exemption takes: yze/globalvar
+// ships one, and an extra disjunct inside an existing condition adds no
+// statement, so statement coverage cannot see it. The rule keys on the type
+// and never on its spelling, so a type called Config is reported like any
+// other and this case is what says so.
+type Config struct{ n int }
+
+func takesConfig(c *Config) { _ = c } // want `pointer parameter`
+
 // derivedPlain is defined over a copyable type, so it stays flagged: the walk
 // follows the definition, it does not exempt every definition.
 type derivedPlain Plain

@@ -34,6 +34,44 @@ func TestLocalToModule(t *testing.T) {
 	assert.False(t, localToModule(&analysis.Pass{Pkg: self, Module: mod}, other), "foreign path is not local")
 	root := types.NewPackage("example.test/mod", "mod")
 	assert.True(t, localToModule(&analysis.Pass{Pkg: self, Module: mod}, root), "the module root package is local")
+
+	sibling := types.NewPackage("example.test/modular", "modular")
+	assert.False(t, localToModule(&analysis.Pass{Pkg: self, Module: mod}, sibling),
+		"a module path is a whole path element: example.test/modular is not inside example.test/mod")
+}
+
+// TestForeignConventionRefusesTheAnalyzedModulesOwnTypes names the split the
+// whole exemption rests on: a foreign type follows its library's design, and
+// the analyzed module's own types are the analyzed code's design
+// responsibility. Dropping the localToModule call would hand the exemption to
+// every module-local type whose own package exports anything taking *T, and
+// the rule very nearly self-cancels — every exported constructor returning *T
+// establishes the convention for T.
+//
+// The corpus cannot hold this case: analysistest loads no module metadata, so
+// pass.Module is nil there and a sibling package looks foreign to it.
+func TestForeignConventionRefusesTheAnalyzedModulesOwnTypes(t *testing.T) {
+	t.Parallel()
+	mine := types.NewPackage("example.test/mod/lib", "lib")
+	node := types.NewNamed(types.NewTypeName(token.NoPos, mine, "Node", nil), types.NewStruct(nil, nil), nil)
+	parse := types.NewFunc(token.NoPos, mine, "Parse",
+		types.NewSignatureType(nil, nil, nil, nil,
+			types.NewTuple(types.NewVar(token.NoPos, mine, "", types.NewPointer(node))), false))
+	mine.Scope().Insert(node.Obj())
+	mine.Scope().Insert(parse)
+	mine.MarkComplete()
+
+	consumer := types.NewPackage("example.test/mod/pkg", "pkg")
+	consumer.MarkComplete()
+	mod := &analysis.Module{Path: "example.test/mod"}
+
+	assert.True(t, apiUsesPointer(mine, node), "the package does hand out *Node — the scan is not the reason")
+	assert.False(t, foreignConvention(&analysis.Pass{Pkg: consumer, Module: mod}, node),
+		"a type inside the analyzed module is the analyzed code's own design, whatever its own package hands out")
+
+	elsewhere := &analysis.Module{Path: "example.test/other"}
+	assert.True(t, foreignConvention(&analysis.Pass{Pkg: consumer, Module: elsewhere}, node),
+		"the identical type outside the analyzed module follows its library")
 }
 
 // TestObjectUsesPointerIgnoresNonAPIObjects covers the object kinds that

@@ -35,6 +35,11 @@ func takesWidget(w *lib.Widget) { _ = w }
 // it. A consumer cannot write that signature any other way.
 func takesHook(h *lib.Hook) { _ = h }
 
+// takesHidden is flagged: lib mentions *Hidden only from lib.Vault's
+// UNEXPORTED field. A convention a consumer cannot see is not a convention,
+// and reading unexported fields would exempt a type on evidence no caller has.
+func takesHidden(h *lib.Hidden) { _ = h } // want `pointer parameter`
+
 // takesIntBox is allowed: lib.MakeIntBox hands out *Box[int].
 func takesIntBox(b *lib.Box[int]) { _ = b }
 
