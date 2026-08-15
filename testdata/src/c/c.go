@@ -30,6 +30,11 @@ func takesRow(r *lib.Row) { _ = r }
 // takesWidget is allowed: lib.Factory.New returns *Widget.
 func takesWidget(w *lib.Widget) { _ = w }
 
+// takesHook is allowed: lib.OnHook is a package-level func type receiving
+// *Hook, which is the shape the library imposes on every implementation of
+// it. A consumer cannot write that signature any other way.
+func takesHook(h *lib.Hook) { _ = h }
+
 // takesIntBox is allowed: lib.MakeIntBox hands out *Box[int].
 func takesIntBox(b *lib.Box[int]) { _ = b }
 

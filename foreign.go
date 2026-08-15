@@ -105,7 +105,13 @@ func typeUsesPointer(obj *types.TypeName, named *types.Named) bool {
 	}
 }
 
-// namedUsesPointer inspects a named type's method set and struct fields.
+// namedUsesPointer inspects a named type's method set and then its underlying:
+// an interface's methods, a struct's exported fields, or — for a package-level
+// FUNC type, which is how a library publishes a callback shape it imposes on
+// every caller (grpc's UnaryServerInterceptor, urfave/cli's ActionFunc) — the
+// signature itself. Omitting the last one reported the callback parameter of
+// every framework that names its own callback type, which is a signature no
+// consumer can write any other way.
 func namedUsesPointer(t, named *types.Named) bool {
 	for i := range t.NumMethods() {
 		m := t.Method(i)
@@ -113,11 +119,16 @@ func namedUsesPointer(t, named *types.Named) bool {
 			return true
 		}
 	}
-	if iface, ok := t.Underlying().(*types.Interface); ok && interfaceUsesPointer(iface, named) {
-		return true
+	switch u := t.Underlying().(type) {
+	case *types.Interface:
+		return interfaceUsesPointer(u, named)
+	case *types.Struct:
+		return fieldsUsePointer(u, named)
+	case *types.Signature:
+		return signatureUsesPointer(u, named)
+	default:
+		return false
 	}
-	st, ok := t.Underlying().(*types.Struct)
-	return ok && fieldsUsePointer(st, named)
 }
 
 // interfaceUsesPointer inspects an interface's explicit methods.

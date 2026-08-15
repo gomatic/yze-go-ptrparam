@@ -66,6 +66,13 @@ type Handle *Cursor
 // Open hands out the pointer under the library's spelling.
 func Open() Handle { return nil }
 
+// Hook is conventioned only through a package-level FUNC type, which is how a
+// library publishes a callback shape it imposes on every caller.
+type Hook struct{ h int }
+
+// OnHook is the callback shape; the framework, not the consumer, chose it.
+type OnHook func(h *Hook) error
+
 // Widget is conventioned through a concrete type's method result.
 type Widget struct{ w int }
 
