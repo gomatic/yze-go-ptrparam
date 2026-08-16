@@ -1,13 +1,14 @@
-// Package nosibling names the same library type and imports none of the
-// library's other packages.
+// Package nosibling names the same library type as package sibling and imports
+// none of the library's other packages. The two exist as a PAIR: they differ
+// only in the import list, so a verdict that moved with the imports would make
+// them differ, and the analyzer's stated reason — a foreign type follows its
+// library's design — is a claim about the type and its library rather than
+// about who imports what.
 package nosibling
 
 import "graph/ast"
 
-// takesDoc is FLAGGED, and this case is the residue the exemption still
-// carries rather than a property anybody wants: the convention graph/format
-// publishes is the same convention whether or not this package imports it, and
-// the scan can only read what the pass was handed. Closing it needs the type's
-// own module enumerated, which belongs to the framework. It is cased so the
-// residue is a case somebody can point at rather than a surprise.
+// takesDoc is FLAGGED, exactly as its twin in package sibling is. graph/ast
+// mentions *Doc nowhere, so the library publishes no pointer convention for it
+// and the verdict is the same whether or not a package that does is imported.
 func takesDoc(d *ast.Doc) { _ = d } // want `pointer parameter`

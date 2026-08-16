@@ -16,8 +16,17 @@
 //     is a sync.Locker while its value is not, directly or through a struct
 //     field or array element — or every exported method it declares takes the
 //     pointer receiver, so a value carries no usable API. The second is
-//     forgeable by design and its forgery is charged by yze/ptrrecv; the first
-//     costs the marker go vet then reports every copy of the type against.
+//     forgeable by design and its forgery is charged by yze/ptrrecv WHEN THE
+//     TYPE DECLARING THE METHOD IS THE PARAMETER'S OWN — the author who writes
+//     the pointer receiver is the one the finding lands on. It is NOT charged
+//     when the criterion is reached through the definition chain below: there
+//     the receiver was written on the source type, whose author may have had
+//     their own reason for it and was already paying that finding, so the
+//     definition buys silence at nobody's expense. That is
+//     ptrparam.inherited-hazard-is-a-layout-property (k1n8261k), open, and it
+//     is stated here rather than only in derived.go because docs/s03.md sends
+//     an enumerator to this comment. The first criterion costs the marker go
+//     vet then reports every copy of the type against.
 //
 //   - An inherited copy hazard (derived.go): a type DEFINED over another named
 //     type — `type MyBuilder strings.Builder` — has that type's layout and so
@@ -32,13 +41,29 @@
 //     either made one `type` line the cheapest silence available here.
 //
 //   - Foreign convention (foreign.go): a type from OUTSIDE the analyzed module
-//     whose own package's exported API hands out or accepts a pointer to it —
+//     whose OWN PACKAGE's exported API hands out or accepts a pointer to it —
 //     in a function or method signature, an interface method, an exported
 //     struct field, or a callback field, directly or one container level deep.
 //     The analyzed module's own types are its own design responsibility and
 //     never gain it, and neither does a named type over a basic underlying,
 //     where `*T` is an out-parameter (flag.DurationVar's *time.Duration)
 //     rather than a passing convention.
+//
+//     NO OTHER PACKAGE IS READ — not a sibling, not one inside the library's
+//     import namespace, not one the judged file imports. Both narrower
+//     readings were tried and both were forgeable from the tree being judged:
+//     an unrestricted scan of the imports made `_ "weaver"` a disablement, and
+//     restricting it to the library's own namespace fell to a go.mod `replace`,
+//     which makes an import path a purely local claim (k1n828c6). A pass
+//     carries no module identity for an imported package, so "a sibling, but a
+//     published one" is a distinction this analyzer has no instrument for.
+//     The cost is stated because it is real: a library that publishes the
+//     pointer only from a package beside the type — gqlparser's
+//     `*ast.QueryDocument`, whose own `ast` package mentions it nowhere — is
+//     REPORTED here, and the value the diagnostic prescribes silently loses
+//     mutations made through the alias. The move left to that author is an
+//     -allow entry, which an inventory can read, rather than an import line,
+//     which leaves no entry anywhere.
 //
 //   - A type parameter: a generic seam whose instantiations the analyzer
 //     cannot judge, and the pointer is how a generic function binds to a

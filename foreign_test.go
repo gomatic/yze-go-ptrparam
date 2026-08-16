@@ -74,19 +74,6 @@ func TestForeignConventionRefusesTheAnalyzedModulesOwnTypes(t *testing.T) {
 		"the identical type outside the analyzed module follows its library")
 }
 
-// TestObjectUsesPointerIgnoresNonAPIObjects covers the object kinds that
-// establish no convention: package vars and alias TypeNames to unnamed types.
-func TestObjectUsesPointerIgnoresNonAPIObjects(t *testing.T) {
-	pkg := types.NewPackage("example.test/lib", "lib")
-	named := types.NewNamed(types.NewTypeName(token.NoPos, pkg, "Node", nil), types.NewStruct(nil, nil), nil)
-
-	v := types.NewVar(token.NoPos, pkg, "Default", types.NewPointer(named))
-	assert.False(t, objectUsesPointer(v, named), "package vars establish no convention")
-
-	alias := types.NewTypeName(token.NoPos, pkg, "Str", types.Typ[types.String])
-	assert.False(t, objectUsesPointer(alias, named), "a TypeName for an unnamed type establishes no convention")
-}
-
 // TestForeignConventionNeverImmunisesABasicUnderlyingType names
 // foreignConvention's exclusion. The immunity exists for foreign types whose
 // own API is pointer-based — forcing values onto them would be wrong code, not
@@ -150,34 +137,75 @@ func TestForeignConventionDeclinesToJudgeAnUnmaterialisedPackage(t *testing.T) {
 		"a library that WAS materialised and hands out no pointer establishes no convention")
 }
 
-// TestLibrarySiblingUsesPointerRefusesTheAnalyzedModule is the case no corpus
-// case in this repo can be: analysistest loads GOPATH-style sources, so
-// `pass.Module` is nil there and every package reads as foreign. Module
-// locality is therefore only assertable against a pass built by hand, and it is
-// load-bearing rather than decorative.
+// TestForeignConventionReadsNoPackageButTheTypesOwn is the k1n828c6 repro
+// reduced to a unit test, and it is a unit test because no corpus case can
+// carry it: analysistest loads GOPATH-style sources, so `pass.Module` is nil
+// there and module locality is not assertable from a fixture at all
+// (docs/i01.md, "analysistest has no module").
 //
-// The shape is a library whose type sits in its MODULE ROOT. `path.Dir` of
-// `github.com/acme/lib` is `github.com/acme` — an owner namespace, not a
-// library — and it contains `github.com/acme/app`. Without the module test an
-// author writes two lines in their own module, blank-imports them, and the
-// library's type goes silent: the one-line evasion this whole scan exists to
-// prevent, wearing the scan's own uniform.
-func TestLibrarySiblingUsesPointerRefusesTheAnalyzedModule(t *testing.T) {
+// The shape is the forgery the sibling scan could not refuse. A library
+// publishes `Doc` in `github.com/fakelib/gql/v2/ast` and mentions `*Doc`
+// nowhere. A package at `github.com/fakelib/gql/v2/weaver` — inside the
+// library's import space, foreign to the analyzed module, and therefore
+// everything the sibling scan asked for — hands the pointer out. Three files
+// and a `replace` directive put that package in the author's own tree, so the
+// marker cost an import path and an import path costs a line of `go.mod`.
+// Nothing is published, the library still has no pointer convention, and
+// `func Copy(d ast.Doc) ast.Doc` is still correct code: docs/s03.md's
+// acquisition test fails outright, which is why the scan is gone rather than
+// narrowed.
+//
+// The refusal has to be unconditional. `types.Package` carries no module
+// identity (Path, Name, GoVersion, Scope, Complete, Imports and nothing else)
+// and `analysis.Pass.Module` describes the ANALYZED package's module alone, so
+// a pass cannot tell a fetched package at that path from one the build
+// supplied — which makes "read a sibling, but only a published one" a
+// distinction this analyzer has no instrument for.
+func TestForeignConventionReadsNoPackageButTheTypesOwn(t *testing.T) {
 	t.Parallel()
-	lib := types.NewPackage("github.com/acme/lib", "lib")
+	lib := types.NewPackage("github.com/fakelib/gql/v2/ast", "ast")
 	doc := mkNamed(lib, "Doc", types.NewVar(token.NoPos, lib, "n", types.Typ[types.Int]))
 	lib.Scope().Insert(doc.Obj())
 	lib.MarkComplete()
 
-	own := handsOutPointer(t, "github.com/acme/app/forge", "forge", doc)
-	library := handsOutPointer(t, "github.com/acme/lib/format", "format", doc)
+	inLibrarySpace := handsOutPointer(t, "github.com/fakelib/gql/v2/weaver", "weaver", doc)
+	outsideIt := handsOutPointer(t, "example.com/app/forge", "forge", doc)
 
-	assert.False(t, foreignConvention(judging(t, "github.com/acme/app", lib, own), doc),
-		"a package of the analyzed module cannot establish a convention for somebody else's type")
-	assert.True(t, foreignConvention(judging(t, "github.com/acme/app", lib, library), doc),
-		"a package the library owns still can, which is what makes the refusal above a discrimination")
-	assert.True(t, foreignConvention(judging(t, "", lib, own), doc),
-		"and without module metadata the conservative fallback stands: only the judged package is local")
+	assert.False(t, foreignConvention(judging(t, lib, inLibrarySpace), doc),
+		"a package inside the library's import space is still a package the analyzed build chose to supply")
+	assert.False(t, foreignConvention(judging(t, lib, outsideIt), doc),
+		"and one outside it establishes nothing either — the type's own package is the whole signal")
+
+	// The positive control: the same shape with the pointer handed out by the
+	// type's OWN package. Without it the two refusals above are satisfied by an
+	// analyzer that exempts nothing at all.
+	results := types.NewTuple(types.NewVar(token.NoPos, lib, "", types.NewPointer(doc)))
+	lib.Scope().Insert(types.NewFunc(token.NoPos, lib, "Parse",
+		types.NewSignatureType(nil, nil, nil, types.NewTuple(), results, false)))
+	assert.True(t, foreignConvention(judging(t, lib), doc),
+		"the type's OWN package handing the pointer out still conventions it, so the refusals above discriminate")
+}
+
+// TestForeignConventionDoesNotFollowTheJudgedPackagesImports is the other side
+// of the same refusal, stated as the property rather than as the forgery: the
+// verdict on a foreign type is a function of the type and its library, so
+// adding or removing an import must not move it. Reading the judged package's
+// imports is what made a blank import a disablement (k1n80q9h) and what made
+// the sibling scan forgeable (k1n828c6); both are the same read.
+func TestForeignConventionDoesNotFollowTheJudgedPackagesImports(t *testing.T) {
+	t.Parallel()
+	lib := types.NewPackage("github.com/fakelib/gql/v2/ast", "ast")
+	doc := mkNamed(lib, "Doc", types.NewVar(token.NoPos, lib, "n", types.Typ[types.Int]))
+	lib.Scope().Insert(doc.Obj())
+	lib.MarkComplete()
+
+	publisher := handsOutPointer(t, "github.com/fakelib/gql/v2/formatter", "formatter", doc)
+
+	bare := foreignConvention(judging(t, lib), doc)
+	withImport := foreignConvention(judging(t, lib, publisher), doc)
+	assert.Equal(t, bare, withImport,
+		"one import line may not change the verdict on somebody else's type")
+	assert.False(t, bare, "and the verdict both ways is the one the library's own package supports")
 }
 
 // handsOutPointer builds a complete package at the given import path whose
@@ -192,63 +220,18 @@ func handsOutPointer(t *testing.T, at, name string, named *types.Named) *types.P
 	return pkg
 }
 
-// judging builds a pass whose analyzed package imports the given packages and
-// whose module is the one named, or none when the path is empty.
-func judging(t *testing.T, module string, imports ...*types.Package) *analysis.Pass {
+// judging builds a pass judging a package of example.com/app that imports the
+// given packages. The module is fixed because every caller judges from the same
+// module: what varies between the cases is which packages are on the import
+// list, which is the dimension the refusals below are about. localToModule's
+// own module-path arithmetic is covered directly by TestLocalToModule, which is
+// where a second module path would earn its keep.
+func judging(t *testing.T, imports ...*types.Package) *analysis.Pass {
 	t.Helper()
-	judged := types.NewPackage("github.com/acme/app/judged", "judged")
+	judged := types.NewPackage("example.com/app/judged", "judged")
 	judged.SetImports(imports)
 	judged.MarkComplete()
-	pass := &analysis.Pass{Pkg: judged}
-	if module != "" {
-		pass.Module = &analysis.Module{Path: module}
-	}
-	return pass
-}
-
-// TestMentionsPointerNeverFollowsTheGenericOrigin names mentionsPointer's
-// invariant: a library that hands out one instantiation of a generic type
-// establishes the convention for THAT instantiation and for no other.
-// Comparing generic origins instead would exempt every instantiation of any
-// generic the library mentions once, which is the escape — for a foreign
-// generic conventioned at a single instantiation, every other instantiation
-// would be free.
-func TestMentionsPointerNeverFollowsTheGenericOrigin(t *testing.T) {
-	t.Parallel()
-	pkg := checkedPkg(t, `package p
-
-type Box[T any] struct{ V T }
-
-func MakeInt() *Box[int] { return nil }
-
-func MakeInts() []*Box[int] { return nil }
-`)
-
-	handed := resultOf(t, pkg, "MakeInt")
-	intBox := namedOf(t, pkg, "Box")
-	require.NotNil(t, intBox)
-
-	instantiated, err := types.Instantiate(nil, intBox.Origin(), []types.Type{types.Typ[types.Int]}, true)
-	require.NoError(t, err)
-	other, err := types.Instantiate(nil, intBox.Origin(), []types.Type{types.Typ[types.String]}, true)
-	require.NoError(t, err)
-
-	assert.True(t, mentionsPointer(handed, instantiated.(*types.Named)),
-		"the instantiation the library hands out is conventioned")
-	assert.False(t, mentionsPointer(handed, other.(*types.Named)),
-		"an instantiation the library never mentions is not conventioned by its sibling")
-
-	slice := resultOf(t, pkg, "MakeInts")
-	assert.True(t, mentionsPointer(slice, instantiated.(*types.Named)), "one container level deep still counts")
-	assert.False(t, mentionsPointer(slice, other.(*types.Named)), "and it still does not cross instantiations")
-}
-
-// resultOf returns the sole result type of the package-scope function name.
-func resultOf(t *testing.T, pkg *types.Package, name string) types.Type {
-	t.Helper()
-	fn, ok := pkg.Scope().Lookup(name).(*types.Func)
-	require.True(t, ok, "no func %s in the fixture", name)
-	return fn.Type().(*types.Signature).Results().At(0).Type()
+	return &analysis.Pass{Pkg: judged, Module: &analysis.Module{Path: "example.com/app"}}
 }
 
 // checkedPkg type-checks src and returns its package.
