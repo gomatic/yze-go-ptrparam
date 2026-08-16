@@ -20,7 +20,7 @@ import (
 
 func TestDisallowedPointerParametersAreReported(t *testing.T) {
 	analysistest.Run(t, analysistest.TestData(), ptrparam.Analyzer,
-		"a", "c", "constraintcycle", "d", "entrypoint", "forged", "neighbour", "nosibling", "sibling")
+		"a", "c", "constraintcycle", "d", "entrypoint", "forged", "neighbour", "nosibling", "rootpub", "sibling")
 }
 
 func TestRegistrationIsWellFormed(t *testing.T) {

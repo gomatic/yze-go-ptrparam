@@ -150,6 +150,62 @@ func TestForeignConventionDeclinesToJudgeAnUnmaterialisedPackage(t *testing.T) {
 		"a library that WAS materialised and hands out no pointer establishes no convention")
 }
 
+// TestLibrarySiblingUsesPointerRefusesTheAnalyzedModule is the case no corpus
+// case in this repo can be: analysistest loads GOPATH-style sources, so
+// `pass.Module` is nil there and every package reads as foreign. Module
+// locality is therefore only assertable against a pass built by hand, and it is
+// load-bearing rather than decorative.
+//
+// The shape is a library whose type sits in its MODULE ROOT. `path.Dir` of
+// `github.com/acme/lib` is `github.com/acme` — an owner namespace, not a
+// library — and it contains `github.com/acme/app`. Without the module test an
+// author writes two lines in their own module, blank-imports them, and the
+// library's type goes silent: the one-line evasion this whole scan exists to
+// prevent, wearing the scan's own uniform.
+func TestLibrarySiblingUsesPointerRefusesTheAnalyzedModule(t *testing.T) {
+	t.Parallel()
+	lib := types.NewPackage("github.com/acme/lib", "lib")
+	doc := mkNamed(lib, "Doc", types.NewVar(token.NoPos, lib, "n", types.Typ[types.Int]))
+	lib.Scope().Insert(doc.Obj())
+	lib.MarkComplete()
+
+	own := handsOutPointer(t, "github.com/acme/app/forge", "forge", doc)
+	library := handsOutPointer(t, "github.com/acme/lib/format", "format", doc)
+
+	assert.False(t, foreignConvention(judging(t, "github.com/acme/app", lib, own), doc),
+		"a package of the analyzed module cannot establish a convention for somebody else's type")
+	assert.True(t, foreignConvention(judging(t, "github.com/acme/app", lib, library), doc),
+		"a package the library owns still can, which is what makes the refusal above a discrimination")
+	assert.True(t, foreignConvention(judging(t, "", lib, own), doc),
+		"and without module metadata the conservative fallback stands: only the judged package is local")
+}
+
+// handsOutPointer builds a complete package at the given import path whose
+// exported API hands out a pointer to named.
+func handsOutPointer(t *testing.T, at, name string, named *types.Named) *types.Package {
+	t.Helper()
+	pkg := types.NewPackage(at, name)
+	results := types.NewTuple(types.NewVar(token.NoPos, pkg, "", types.NewPointer(named)))
+	sig := types.NewSignatureType(nil, nil, nil, types.NewTuple(), results, false)
+	pkg.Scope().Insert(types.NewFunc(token.NoPos, pkg, "Hand", sig))
+	pkg.MarkComplete()
+	return pkg
+}
+
+// judging builds a pass whose analyzed package imports the given packages and
+// whose module is the one named, or none when the path is empty.
+func judging(t *testing.T, module string, imports ...*types.Package) *analysis.Pass {
+	t.Helper()
+	judged := types.NewPackage("github.com/acme/app/judged", "judged")
+	judged.SetImports(imports)
+	judged.MarkComplete()
+	pass := &analysis.Pass{Pkg: judged}
+	if module != "" {
+		pass.Module = &analysis.Module{Path: module}
+	}
+	return pass
+}
+
 // TestMentionsPointerNeverFollowsTheGenericOrigin names mentionsPointer's
 // invariant: a library that hands out one instantiation of a generic type
 // establishes the convention for THAT instantiation and for no other.

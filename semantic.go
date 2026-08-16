@@ -122,7 +122,16 @@ func uncopyableWithin(seen visited, t types.Type) bool {
 // TestConstraintUncopyableReadsEveryConstraintFormGoTypesProduces asserts — so
 // the assertion below carries no branch for a case that cannot occur.
 func constraintUncopyable(seen visited, param *types.TypeParam) bool {
-	iface := param.Constraint().Underlying().(*types.Interface)
+	return interfaceUncopyable(seen, param.Constraint().Underlying().(*types.Interface))
+}
+
+// interfaceUncopyable walks every element of an interface's type set. It is
+// reached both from a constraint and from componentUncopyable, because a
+// constraint element may itself be an interface — `interface{ Locked }` where
+// `Locked` is `interface{ sync.Mutex }` is the same type set one embedding
+// away, and stopping at the embedding judged it copyable while go vet reported
+// every copy of it.
+func interfaceUncopyable(seen visited, iface *types.Interface) bool {
 	for i := range iface.NumEmbeddeds() {
 		if embeddedUncopyable(seen, iface.EmbeddedType(i)) {
 			return true
@@ -146,7 +155,11 @@ func embeddedUncopyable(seen visited, t types.Type) bool {
 	return false
 }
 
-// componentUncopyable descends into struct fields and array elements.
+// componentUncopyable descends into struct fields, array elements, and the
+// elements of an interface's type set. The last is what an embedded constraint
+// arrives as, and it is safe to descend into only because the walk carries a
+// cycle guard: an interface embedding chain can close on itself, which a struct
+// or an array cannot.
 func componentUncopyable(seen visited, t types.Type) bool {
 	switch u := t.Underlying().(type) {
 	case *types.Struct:
@@ -157,6 +170,8 @@ func componentUncopyable(seen visited, t types.Type) bool {
 		}
 	case *types.Array:
 		return uncopyableWithin(seen, u.Elem())
+	case *types.Interface:
+		return interfaceUncopyable(seen, u)
 	}
 	return false
 }

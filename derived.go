@@ -58,8 +58,8 @@ func conventionedHere(d decision, t *types.Named) bool {
 // over and reports whether any link carries a copy hazard the definition
 // inherits along with the layout.
 //
-// WHAT IS INHERITED IS THE LAYOUT, SO WHAT IS INHERITED IS THE HAZARD, and
-// nothing else. `type MyBuilder strings.Builder` copies strings.Builder byte
+// WHAT IS INHERITED IS THE LAYOUT, SO WHAT IS MEANT TO BE INHERITED IS THE
+// HAZARD. `type MyBuilder strings.Builder` copies strings.Builder byte
 // for byte and inherits none of the methods that ANNOUNCE the hazard, so
 // judging the definition alone reported it — and the remedy prescribed there
 // is not merely expensive, it is wrong: taking it was built and RUN, and it
@@ -68,6 +68,18 @@ func conventionedHere(d decision, t *types.Named) bool {
 // `type MyRand rand.Rand` are the same shape and corrupt silently instead.
 // That is pointerIdiomatic's question — a lock in the layout, or a method set
 // that exists only on the pointer — and it is the only one asked of a link.
+//
+// ONLY HALF OF THAT QUESTION IS ACTUALLY ABOUT THE LAYOUT, and saying so is the
+// honest version of the paragraph above. A lock is inherited; a method set is
+// not, because a definition inherits no methods at all. `type Payload Base`,
+// where Base has one exported pointer-receiver method, is silent here although
+// a Payload value carries no less API than a Payload pointer and go vet is
+// silent about copying it — one `type` line, and the compensating yze/ptrrecv
+// finding lands on Base for reasons of its own. The half is kept because it is
+// the only signal available for the founding case: strings.Builder and
+// bytes.Buffer carry no lock, and their hazard is a self-pointer and an aliased
+// slice that no criterion here can read. Recorded as
+// ptrparam.inherited-hazard-is-a-layout-property (k1n8261k).
 //
 // THE OTHER TWO EXEMPTIONS DO NOT TRANSFER, and applying them here was a
 // silent widening of both. A foreign library's convention is the claim that

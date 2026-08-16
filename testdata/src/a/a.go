@@ -315,3 +315,51 @@ func takesDerivedMutex(m *derivedMutex) { _ = m }
 type derivedInstance genDerived[string]
 
 func takesDerivedInstance(d *derivedInstance) { _ = d }
+
+// embeddedLockable is the same type set as lockable, one embedding away. go
+// vet's copylocks resolves it — `passes lock by value: G[T] contains T contains
+// Locked contains sync.Mutex` on the prescribed remedy, measured — so a walk
+// that stopped at the embedding prescribed a value parameter the standard
+// toolchain then rejects, which is the contradiction the constraint arm exists
+// to prevent. Allowed.
+type embeddedLockable interface{ lockable }
+
+type embeddedLockConstrained[T embeddedLockable] struct{ v T }
+
+func takesEmbeddedLock[T embeddedLockable](c *embeddedLockConstrained[T]) { _ = c }
+
+// embeddedCopyable is the same shape with no lock in the embedded type set, so
+// the walk enters it and comes back out: flagged. Without this sibling the case
+// above could be passed by exempting every embedded constraint.
+type embeddedCopyable interface{ copyableEither }
+
+type embeddedCopyConstrained[T embeddedCopyable] struct{ v T }
+
+func takesEmbeddedCopy[T embeddedCopyable](c *embeddedCopyConstrained[T]) { _ = c } // want `pointer parameter`
+
+// methodThenLock puts a method-only interface FIRST among its embedded
+// elements and the lock element SECOND, so a walk that read only the first
+// element would answer copyable and prescribe a value parameter that go vet
+// then rejects. Allowed.
+type stringish interface{ String() string }
+
+type methodThenLock interface {
+	stringish
+	sync.Mutex
+}
+
+type methodThenLockConstrained[T methodThenLock] struct{ v T }
+
+func takesMethodThenLock[T methodThenLock](c *methodThenLockConstrained[T]) { _ = c }
+
+// methodThenCopy is the same arrangement with nothing to find in either
+// element, so the case above cannot be passed by exempting every constraint
+// that embeds more than one thing: flagged.
+type methodThenCopy interface {
+	stringish
+	copyableEither
+}
+
+type methodThenCopyConstrained[T methodThenCopy] struct{ v T }
+
+func takesMethodThenCopy[T methodThenCopy](c *methodThenCopyConstrained[T]) { _ = c } // want `pointer parameter`

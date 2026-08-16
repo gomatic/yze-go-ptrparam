@@ -96,9 +96,28 @@ func foreignConvention(pass *analysis.Pass, named *types.Named) bool {
 // `github.com/vektah/gqlparser/v2/ast`. A single-segment path (`bytes`, `lib`)
 // has `.` for a parent, which holds no import path at all, so it needs no case
 // of its own: it establishes nothing for anybody and matches nothing.
+//
+// THE ANALYZED MODULE IS NEVER A CONVENTION SOURCE, and leaving that out was a
+// hole the size of the one this scan closes. `path.Dir` of a type declared in a
+// library's ROOT package is the owner namespace — `github.com/acme` for
+// `github.com/acme/lib` — which contains `github.com/acme/app`, so an author
+// working in that owner's namespace could write two lines in their own module,
+// blank-import them, and silence the library's type. That is the same one-line
+// evasion the whole scan is scoped to prevent, and the scope test alone does not
+// catch it: only a package OUTSIDE the analyzed module can say what a library's
+// convention is.
+//
+// What the path space still cannot separate is a library whose type sits at its
+// module root from the owner namespace above it, so a DIFFERENT module under the
+// same owner can establish a convention for it. That costs a published module a
+// reviewer can see rather than a file in the tree being judged, which is the
+// same line foreignConvention draws for its other blind spot.
 func librarySiblingUsesPointer(pass *analysis.Pass, pkg *types.Package, named *types.Named) bool {
 	space := importSpace(path.Dir(pkg.Path()))
 	for _, imported := range pass.Pkg.Imports() {
+		if localToModule(pass, imported) {
+			continue
+		}
 		if space.holds(importPath(imported.Path())) && apiUsesPointer(imported, named) {
 			return true
 		}

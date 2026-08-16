@@ -69,9 +69,12 @@ func unionSecondTerm[T interface{ ~struct{ A int } | ~struct{ N T } }](g *G[T]) 
 // instantiation rather than the parameter directly.
 func instantiationTerm[T interface{ ~struct{ X G[T] } }](g *G[T]) { _ = g } // want `pointer parameter`
 
-// embeddedConstraint is reported, and it does NOT cycle: the walk stops at the
-// embedded named interface without entering Inner's type set. It sits here as
-// the discriminating sibling — it reaches the same verdict by a route the guard
-// is not on, so a guard that silenced the cyclic spellings would show up as a
-// difference between this line and the eight above it.
+// embeddedConstraint is reported, and the cycle it closes runs THROUGH an
+// embedded interface: the walk enters Outer's element, finds Inner, enters
+// Inner's type set, and arrives back at T. An earlier revision of this file
+// asserted the opposite — that the walk stopped at the embedding — and pinned
+// it with this same `want`. The assertion was insensitive either way, because
+// Outer and Inner hold no lock, so the comment made a defect look covered while
+// the case could not tell the two behaviours apart. The lock-bearing sibling
+// that CAN tell them apart is takesEmbeddedLock in testdata/src/a.
 func embeddedConstraint[T Outer[T]](g *G[T]) { _ = g } // want `pointer parameter`

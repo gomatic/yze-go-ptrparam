@@ -227,6 +227,12 @@ func Instantiation[T interface{ ~struct{ X G[T] } }](g *G[T]) {}
 func Embedded[T Outer[T]](g *G[T]) {}
 
 func Locked[T interface{ ~struct{ N T; M sync.Mutex } }](g *G[T]) {}
+
+type Holds interface{ sync.Mutex }
+
+type HoldsNested interface{ Holds }
+
+func EmbeddedLock[T HoldsNested](g *G[T]) {}
 `)
 
 	for _, name := range []string{
@@ -238,7 +244,41 @@ func Locked[T interface{ ~struct{ N T; M sync.Mutex } }](g *G[T]) {}
 	}
 
 	assert.True(t, uncopyable(typeParamOf(t, pkg, "Locked")),
-		"the cycle guard stops the descent, never the finding: a lock beside the cyclic field is still reached")
+		"the cycle guard stops the descent, not the finding: a lock beside the cyclic field is still reached")
+	assert.True(t, uncopyable(typeParamOf(t, pkg, "EmbeddedLock")),
+		"and a lock one embedding away is the same type set, which go vet resolves and reports every copy of")
+}
+
+// TestComponentUncopyableEntersAnInterfaceTypeSetWithoutCycling names the
+// claim the interface arm rests on: descending into an interface's type set is
+// safe here only because the walk carries a cycle guard. A struct or an array
+// cannot close a cycle — Go rejects it — but an interface embedding chain can,
+// and the constraint that mentions its own parameter closes one through this
+// arm. So the arm and the guard are one decision, and removing either without
+// the other either loses the lock or loses the process.
+func TestComponentUncopyableEntersAnInterfaceTypeSetWithoutCycling(t *testing.T) {
+	t.Parallel()
+	pkg := checkedPkg(t, `package p
+
+import "sync"
+
+type Guarded interface{ sync.Mutex }
+
+type Wrapped interface{ Guarded }
+
+type Twice interface{ Wrapped }
+
+type Free interface{ int | string }
+
+type FreeWrapped interface{ Free }
+`)
+
+	assert.True(t, componentUncopyable(visited{}, namedOf(t, pkg, "Wrapped")),
+		"a lock one embedding away is the same type set")
+	assert.True(t, componentUncopyable(visited{}, namedOf(t, pkg, "Twice")),
+		"and the arm does not stop after one embedding")
+	assert.False(t, componentUncopyable(visited{}, namedOf(t, pkg, "FreeWrapped")),
+		"an embedded type set with no lock in it comes back out")
 }
 
 // typeParamOf returns the sole type parameter of the package-scope function.
