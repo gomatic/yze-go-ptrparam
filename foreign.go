@@ -4,6 +4,7 @@ package ptrparam
 
 import (
 	"go/types"
+	"path"
 	"strings"
 
 	"golang.org/x/tools/go/analysis"
@@ -16,15 +17,42 @@ import (
 // returning *ast.Document whose nodes are aliased and mutated in place),
 // forcing values onto it would be wrong code, not style.
 //
-// The signal is read from the type's OWN package and from nowhere else. It
-// used to be read from the analyzed package's direct imports as well, on the
-// reasoning that constructors often live beside the type rather than inside
-// its package, and that made the verdict a function of the analyzed file's
-// import list: adding `_ "weaver"` to a file, one line that changes nothing
-// else and reads as ordinary housekeeping, turned a reported parameter silent,
-// and deleting an import a refactor no longer needed turned a green file red
-// for a reason nothing in the diff explained. A decision about a type must
-// read something the judging file cannot rewrite.
+// The signal is read from the type's own package, and from the imported
+// packages THE LIBRARY ITSELF OWNS — those whose import path sits in the space
+// the type's package hangs off. It used to be read from every direct import,
+// on the reasoning that constructors often live beside the type rather than
+// inside its package. The reasoning is right and the scan was too wide: it
+// made the verdict a function of the analyzed file's import list, because ANY
+// package could be the one that hands the pointer out. Adding `_ "weaver"` to
+// a file — one line that changes nothing else and reads as ordinary
+// housekeeping — turned a reported parameter silent, and the `weaver` it named
+// was two lines the author wrote themselves.
+//
+// Reading only the type's own package answers that and costs the shape the
+// exemption was written for first. Go libraries put types in `ast/` and the
+// operations on them beside it: `github.com/vektah/gqlparser/v2/ast` mentions
+// `*QueryDocument` nowhere, and `parser`, `validator`, `formatter` and the
+// root package all hand it out or take it. Measured, that silence added 21
+// findings on one type across the fleet, and the remedy prescribed for them
+// was built and RUN: passing the value loses the appended operation silently,
+// with go vet and this analyzer both exiting 0 on the remedied source. A
+// diagnostic whose remedy corrupts leaves the author the baseline, which is
+// the population this rule is meant to shrink.
+//
+// The path space is what discriminates the two. `weaver` is not in `fabric`'s
+// space and never becomes a convention source for it; `formatter` is in
+// `ast`'s, and an author cannot write a package there without owning the
+// library's path. So the marker stays out of reach of the code being judged:
+// forging it means publishing inside somebody else's import path, and a
+// library that already publishes the pointer is one whose convention is the
+// thing the exemption reads.
+//
+// WHAT REMAINS, stated rather than implied: the scan still reads the judged
+// package's imports, so a package naming the type and importing none of its
+// library's siblings is reported where a package importing one is not. That
+// residue is smaller than the hole it replaces and it errs toward reporting,
+// which is the direction an author can act on. Closing it needs the type's own
+// module enumerated, which a pass cannot do and the framework can.
 //
 // Where the loader did not materialise the library, the analyzer renders no
 // verdict on it. go/types populates a package's scope only as far as the
@@ -59,7 +87,36 @@ func foreignConvention(pass *analysis.Pass, named *types.Named) bool {
 	if !pkg.Complete() {
 		return true
 	}
-	return apiUsesPointer(pkg, named)
+	return apiUsesPointer(pkg, named) || librarySiblingUsesPointer(pass, pkg, named)
+}
+
+// librarySiblingUsesPointer reports whether an imported package the type's own
+// library owns hands the pointer out. The space a library owns is the parent of
+// its package's import path — `formatter` and `parser` for a type declared in
+// `github.com/vektah/gqlparser/v2/ast`. A single-segment path (`bytes`, `lib`)
+// has `.` for a parent, which holds no import path at all, so it needs no case
+// of its own: it establishes nothing for anybody and matches nothing.
+func librarySiblingUsesPointer(pass *analysis.Pass, pkg *types.Package, named *types.Named) bool {
+	space := importSpace(path.Dir(pkg.Path()))
+	for _, imported := range pass.Pkg.Imports() {
+		if space.holds(importPath(imported.Path())) && apiUsesPointer(imported, named) {
+			return true
+		}
+	}
+	return false
+}
+
+// importSpace is the import-path prefix a library owns.
+type importSpace string
+
+// importPath is one package's import path.
+type importPath string
+
+// holds reports whether an import path is the space itself or sits under it.
+// The separator is required, so `github.com/a/bee` is outside the space
+// `github.com/a/b`.
+func (s importSpace) holds(candidate importPath) bool {
+	return string(candidate) == string(s) || strings.HasPrefix(string(candidate), string(s)+"/")
 }
 
 // localToModule reports whether pkg belongs to the analyzed module. Without
