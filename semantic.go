@@ -63,20 +63,51 @@ func pointerOnlyMethods(named *types.Named) bool {
 	return exported > 0
 }
 
+// visited is the set of types one walk has already descended into. A single
+// set is threaded through the whole descent, so re-entering a type means the
+// walk has closed a cycle rather than found a second route worth taking.
+type visited map[types.Type]bool
+
+// entering records t and reports whether this is the first time the walk has
+// descended into it. Answering false on a repeat is the sound answer, not a
+// surrender: the only way back to t is the edge the walk is already on, so
+// nothing reachable only through it is reachable at all. A lock on any other
+// edge is still found, because the sibling edges are still walked.
+func (v visited) entering(t types.Type) bool {
+	if v[t] {
+		return false
+	}
+	v[t] = true
+	return true
+}
+
 // uncopyable reports whether t transitively holds a lock — the copylocks
 // criterion.
+func uncopyable(t types.Type) bool { return uncopyableWithin(visited{}, t) }
+
+// uncopyableWithin is the walk, and the cycle guard is here because every
+// recursive edge in this file passes through it.
 //
-// The walk needs no cycle guard and carries none: it descends ONLY through
-// struct fields and array elements, and Go rejects every value-type cycle
-// reachable that way ("invalid recursive type", verified for `struct{ a [1]T }`,
-// for a two-type A/B cycle, and for a cycle through a generic instantiation).
-// The shapes that CAN refer to themselves — a *T field, a []T field, a map
-// value — are not descended into, because copying them copies a reference.
-func uncopyable(t types.Type) bool {
-	if param, isParam := types.Unalias(t).(*types.TypeParam); isParam {
-		return constraintUncopyable(param)
+// The guard is the one go vet's copylocks carries for the same walk —
+// copylock.go:282-290 in golang.org/x/tools, "The seen map is used to
+// short-circuit infinite recursion due to type cycles" — and it is needed for
+// the same arm. Descending only through struct fields and array elements would
+// not need it, because Go rejects every value-type cycle reachable that way
+// ("invalid recursive type", verified for `struct{ a [1]T }`, for a two-type
+// A/B cycle, and for a cycle through a generic instantiation). Descending
+// through a TYPE PARAMETER's constraint does need it: `[T interface{ ~struct{
+// N T } }]` is legal Go that `go build` and `go vet` both accept, and it puts
+// this walk on a cycle the language does not reject. Without the guard the
+// process died with `fatal error: stack overflow` — not a wrong verdict but no
+// verdict at all, for every analyzer sharing the run.
+func uncopyableWithin(seen visited, t types.Type) bool {
+	if !seen.entering(t) {
+		return false
 	}
-	return mustNotCopy(t) || componentUncopyable(t)
+	if param, isParam := types.Unalias(t).(*types.TypeParam); isParam {
+		return constraintUncopyable(seen, param)
+	}
+	return mustNotCopy(t) || componentUncopyable(seen, t)
 }
 
 // constraintUncopyable applies the criterion to every type a type parameter's
@@ -90,10 +121,10 @@ func uncopyable(t types.Type) bool {
 // arrives here as an interface holding `int` as its single element, which
 // TestConstraintUncopyableReadsEveryConstraintFormGoTypesProduces asserts — so
 // the assertion below carries no branch for a case that cannot occur.
-func constraintUncopyable(param *types.TypeParam) bool {
+func constraintUncopyable(seen visited, param *types.TypeParam) bool {
 	iface := param.Constraint().Underlying().(*types.Interface)
 	for i := range iface.NumEmbeddeds() {
-		if embeddedUncopyable(iface.EmbeddedType(i)) {
+		if embeddedUncopyable(seen, iface.EmbeddedType(i)) {
 			return true
 		}
 	}
@@ -102,13 +133,13 @@ func constraintUncopyable(param *types.TypeParam) bool {
 
 // embeddedUncopyable walks one constraint element: a union of terms, or a
 // single type standing for itself.
-func embeddedUncopyable(t types.Type) bool {
+func embeddedUncopyable(seen visited, t types.Type) bool {
 	union, isUnion := t.(*types.Union)
 	if !isUnion {
-		return uncopyable(t)
+		return uncopyableWithin(seen, t)
 	}
 	for i := range union.Len() {
-		if uncopyable(union.Term(i).Type()) {
+		if uncopyableWithin(seen, union.Term(i).Type()) {
 			return true
 		}
 	}
@@ -116,16 +147,16 @@ func embeddedUncopyable(t types.Type) bool {
 }
 
 // componentUncopyable descends into struct fields and array elements.
-func componentUncopyable(t types.Type) bool {
+func componentUncopyable(seen visited, t types.Type) bool {
 	switch u := t.Underlying().(type) {
 	case *types.Struct:
 		for f := range u.Fields() {
-			if uncopyable(f.Type()) {
+			if uncopyableWithin(seen, f.Type()) {
 				return true
 			}
 		}
 	case *types.Array:
-		return uncopyable(u.Elem())
+		return uncopyableWithin(seen, u.Elem())
 	}
 	return false
 }
