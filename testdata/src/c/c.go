@@ -56,3 +56,21 @@ func takesCursor(c *lib.Cursor) { _ = c }
 
 // takesHandle is allowed: the same pointer, spelled as the library spells it.
 func takesHandle(h lib.Handle) { _ = h }
+
+// localNode is DEFINED over a foreign type whose only exemption is its
+// library's published convention: lib.Parse hands out *lib.Node, and lib.Node
+// declares no method and holds no lock. Flagged. The definition inherits
+// lib.Node's LAYOUT, which carries no copy hazard, and it cannot inherit the
+// convention, because lib's API mentions localNode nowhere — no signature in
+// the library can be handed one, so passing it by value is code lib never
+// sees. Inheriting the convention made this one `type` line the cheapest
+// silence in the analyzer.
+type localNode lib.Node
+
+func takesLocalNode(n *localNode) { _ = n } // want `pointer parameter`
+
+// localHandled is one link further along the same chain, so a fix that stopped
+// at the first link would still exempt it.
+type localHandled localNode
+
+func takesLocalHandled(h *localHandled) { _ = h } // want `pointer parameter`

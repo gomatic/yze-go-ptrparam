@@ -288,3 +288,30 @@ type copyableEither interface {
 type mixedConstrained[T copyableEither] struct{ v T }
 
 func takesMixedConstrained[T copyableEither](c *mixedConstrained[T]) { _ = c } // want `pointer parameter`
+
+// derivedBuffer is the shape the package comment's fifth exemption is written
+// for, and the one that proves it applies to the analyzed module's own types:
+// bytes.Buffer's exported methods all take the pointer receiver, and a
+// definition over it copies the slice header and the read state byte for byte
+// while inheriting no method to announce it. Allowed — passing it by value
+// corrupts silently rather than panicking, which is the same hazard as
+// derivedBuilder and a quieter one.
+type derivedBuffer bytes.Buffer
+
+func takesDerivedBuffer(b *derivedBuffer) { _ = b }
+
+// derivedMutex inherits a lock rather than a method set: copying it copies a
+// sync.Mutex, which is go vet's own must-not-copy marker, and the definition
+// carries none of sync.Mutex's methods to say so. Allowed.
+type derivedMutex sync.Mutex
+
+func takesDerivedMutex(m *derivedMutex) { _ = m }
+
+// derivedInstance is defined over an INSTANTIATION of a generic definition, so
+// the chain's second step starts from an instance rather than from the generic
+// the TypeSpec named. A TypeSpec can only name the generic, so the lookup has
+// to be keyed on the origin at every step and not merely at the first — the
+// hazard is strings.Builder's and it is two links away. Allowed.
+type derivedInstance genDerived[string]
+
+func takesDerivedInstance(d *derivedInstance) { _ = d }

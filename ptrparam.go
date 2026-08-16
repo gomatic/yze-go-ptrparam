@@ -8,7 +8,7 @@
 // alias are one rule, because they are one type and no call site can tell
 // them apart.
 //
-// There are four exemptions and no others.
+// There are five exemptions and no others.
 //
 //   - Pointer-idiomatic, decided from the type itself and applying to any
 //     package including the analyzed module's own (semantic.go): the type is
@@ -18,6 +18,18 @@
 //     pointer receiver, so a value carries no usable API. The second is
 //     forgeable by design and its forgery is charged by yze/ptrrecv; the first
 //     costs the marker go vet then reports every copy of the type against.
+//
+//   - An inherited copy hazard (derived.go): a type DEFINED over another named
+//     type — `type MyBuilder strings.Builder` — has that type's layout and so
+//     its copy hazards, while inheriting none of the methods that announce
+//     them. This one DOES apply to the analyzed module's own types, and it is
+//     the only exemption that does so on the strength of another type: the
+//     hazard is in the layout, and the layout is what a definition copies.
+//     Only the pointer-idiomatic question above is asked of a link in that
+//     chain, never the two below it — a foreign library's convention is about
+//     the library's own type and no signature anywhere can be handed the local
+//     one, and an -allow entry names a single `pkgpath.Name`. Inheriting
+//     either made one `type` line the cheapest silence available here.
 //
 //   - Foreign convention (foreign.go): a type from OUTSIDE the analyzed module
 //     whose own package's exported API hands out or accepts a pointer to it —
