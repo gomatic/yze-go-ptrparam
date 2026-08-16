@@ -8,7 +8,9 @@
 // alias are one rule, because they are one type and no call site can tell
 // them apart.
 //
-// There are five exemptions and no others.
+// There are six exemptions and no others. Five are decided from the type; the
+// sixth is decided from what the loader happened to materialise and is stated
+// at the end, where it used to be miscounted as a limitation.
 //
 //   - Pointer-idiomatic, decided from the type itself and applying to any
 //     package including the analyzed module's own (semantic.go): the type is
@@ -76,11 +78,27 @@
 //     and is simply dead. It is named here because an exemption nobody can
 //     enumerate is one nobody reviews.
 //
-// One scope limitation, which is not an exemption: where go/types did not
-// materialise a foreign type's own package — it reached the type through
-// another package's alias re-export and loaded nothing else — the analyzer
-// renders no verdict on it, because the alternative is a verdict that follows
-// the analyzed file's import list rather than its code.
+// A SIXTH EXEMPTION, named as one because that is what it is. Where go/types
+// did not materialise a foreign type's own package — it reached the type
+// through another package's alias re-export and loaded nothing else — the
+// analyzer exempts the parameter. This comment called that "a scope
+// limitation, which is not an exemption" and that was wrong twice over: it is
+// the `return true` branch of foreignConvention, it produces silence at zero
+// cost, and it disagreed with foreign.go's own comment, which had already been
+// corrected to call it a disablement channel. An enumerator following
+// docs/s03.md reads THIS comment, so counting it out of the list is how a
+// shape passes every instrument by not being looked for.
+//
+// It is import-list-dependent and it is DRIVER-DEPENDENT, which is the part
+// worth writing down: a four-line alias package in the author's own module,
+// `type Doc = ast.Doc`, silences the library's type under `go vet -vettool`
+// while the same source reports under a packages.Load driver, and one blank
+// import of the library flips the vet verdict back. Neither polarity is
+// import-independent — blindness cannot tell "this library publishes no
+// pointer convention" from "this library was not loaded" — so this is a choice
+// between two channels rather than the absence of one. The repair is a loader
+// that materialises the type's own package, which belongs to go-yze.
+// ptrparam.verdict-does-not-follow-the-loaders-reach (k1n81qeg), open.
 package ptrparam
 
 import (

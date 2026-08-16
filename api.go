@@ -20,6 +20,28 @@ import "go/types"
 //
 // It is reached only for a complete pkg; foreignConvention holds that line
 // and says why.
+//
+// THIS SIGNAL IS FORGEABLE TOO, and saying so is the honest version of the
+// paragraph in foreign.go that deleted the sibling scan in its favour. That
+// deletion is still right — the sibling scan cost a `replace` line and this
+// costs more — but "the type's own package" is not a property of the library,
+// it is a property of whatever the build serves at the library's import path.
+// A vendor tree is consulted verbatim and its FILE CONTENTS are not checksummed
+// against the module, so one appended line inside
+// `vendor/<lib>/ast/document.go` —
+//
+//	func VendorHand() *QueryDocument { return nil }
+//
+// — puts the pointer into the type's own exported API and silences the
+// parameter. Reproduced against the real github.com/vektah/gqlparser/v2
+// v2.5.36 under the standalone binary AND under `go vet -vettool`, with
+// `go build ./...` and `go vet ./...` both clean and only the planted control
+// still reported. It needs no go.mod change, no `replace`, no new package and
+// no import in the judged file, and it lands in a directory review tooling
+// routinely collapses. Recorded as
+// ptrparam.foreign-convention-is-read-from-the-published-library (k1n82e20),
+// open; closing it needs the library read from something the analyzed build
+// does not supply, which is the framework's to give and not a pass's.
 func apiUsesPointer(pkg *types.Package, named *types.Named) bool {
 	scope := pkg.Scope()
 	for _, name := range scope.Names() {

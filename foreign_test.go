@@ -109,16 +109,34 @@ type Buffer struct{ b []byte }
 		"a structured type reaches the rest of the decision rather than being excluded outright")
 }
 
-// TestForeignConventionDeclinesToJudgeAnUnmaterialisedPackage names the
-// scope limitation foreignConvention rests on. go/types populates a package's
-// scope only as far as the loader needed it, so a foreign type reached
-// through another package's alias re-export arrives with its own package
-// holding one name and nothing else. Scanning that scope reports "no
-// convention" for a library whose convention was merely not loaded — and one
-// blank import of the unloaded package completes the scope and turns the same
-// finding silent, which is a verdict that follows the import list rather than
-// the code. Where the analyzer cannot read the library, it renders no verdict.
-func TestForeignConventionDeclinesToJudgeAnUnmaterialisedPackage(t *testing.T) {
+// TestForeignConventionExemptsAnUnmaterialisedPackage pins the SIXTH
+// exemption, and it is named for what it does rather than for what an earlier
+// version of this comment wished it did. go/types populates a package's scope
+// only as far as the loader needed it, so a foreign type reached through
+// another package's alias re-export arrives with its own package holding one
+// name and nothing else, and this branch exempts it.
+//
+// THIS TEST DOES NOT SAY THE BEHAVIOUR IS RIGHT, and the previous comment came
+// close to saying so. It justified the exemption on the ground that the
+// alternative "follows the import list" — while this polarity follows the
+// import list too, in the other direction, which is a limitation being blessed
+// rather than a contract being asserted (RULE 13). Measured: a four-line
+// `type Doc = ast.Doc` package in the author's own module silences the
+// library's type under `go vet -vettool` while the identical source reports
+// under a packages.Load driver, and one blank import flips the vet verdict
+// back. Neither polarity is import-independent, because blindness cannot tell
+// "this library publishes no pointer convention" from "this library was not
+// loaded"; this one was chosen because it costs a package a reviewer can see
+// rather than one import line nobody reads.
+//
+// So what is asserted here is the BRANCH, so that flipping the polarity is a
+// deliberate act with a failing test behind it — not that the branch is
+// correct. It is ptrparam.verdict-does-not-follow-the-loaders-reach (k1n81qeg),
+// open, and the repair is a loader that materialises the package rather than
+// either polarity. No corpus case can reach this: analysistest type-checks
+// every dependency from source, so Complete() is always true there, which is
+// why this synthetic pass is the only coverage the branch has.
+func TestForeignConventionExemptsAnUnmaterialisedPackage(t *testing.T) {
 	t.Parallel()
 	analysed := types.NewPackage("example.test/mod/pkg", "pkg")
 	analysed.MarkComplete()
@@ -127,7 +145,7 @@ func TestForeignConventionDeclinesToJudgeAnUnmaterialisedPackage(t *testing.T) {
 	hidden := types.NewNamed(types.NewTypeName(token.NoPos, unloaded, "Node", nil), types.NewStruct(nil, nil), nil)
 	require.False(t, unloaded.Complete(), "the loader materialised nothing but the name")
 	assert.True(t, foreignConvention(&analysis.Pass{Pkg: analysed}, hidden),
-		"a library the loader never materialised is not a library with no pointer convention")
+		"an unmaterialised library is EXEMPTED, which is the branch under test and not a claim that it should be")
 
 	loaded := types.NewPackage("example.test/lib2", "lib2")
 	seen := types.NewNamed(types.NewTypeName(token.NoPos, loaded, "Options", nil), types.NewStruct(nil, nil), nil)
